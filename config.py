@@ -7,3 +7,6 @@ DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 CLIENT_ID = os.getenv('CLIENT_ID')
 GUILD_ID = os.getenv('GUILD_ID')
 WEATHER_API_KEY = os.getenv('WEATHER_API_KEY')
+
+# Debug-Print
+print(f"Token geladen: {'Ja' if DISCORD_TOKEN else 'Nein'}")

@@ -79,5 +79,22 @@ async def init_db():
                 expires_at DATETIME
             )
         ''')
+
+        # Tabelle für Willkommens-Konfiguration
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS welcome_config (
+                guild_id INTEGER PRIMARY KEY,
+                welcome_channel_id INTEGER,
+                rules_channel_id INTEGER,
+                verification_channel_id INTEGER,
+                welcome_message TEXT,
+                welcome_role_id INTEGER,
+                rules_message_id INTEGER,
+                temp_role_id INTEGER,
+                verified_role_id INTEGER,
+                enabled BOOLEAN DEFAULT 1,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
         
         await db.commit() 

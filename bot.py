@@ -15,6 +15,7 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 async def load_extensions():
     await bot.load_extension("cogs.moderation_commands")
     await bot.load_extension("cogs.weather_commands")
+    await bot.load_extension("cogs.welcome_system")
 
 @bot.event
 async def on_ready():

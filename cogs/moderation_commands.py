@@ -37,77 +37,149 @@ class ModerationCommands(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(kick_members=True)
-    async def warn(self, ctx, member: discord.Member, *, reason=None):
+    async def warn(self, ctx, user_input: str = None, *, reason=None):
         """Verwarnt ein Mitglied"""
-        async with aiosqlite.connect(DB_PATH) as db:
-            await db.execute('''
-                INSERT INTO warnings (user_id, guild_id, reason, moderator_id)
-                VALUES (?, ?, ?, ?)
-            ''', (member.id, ctx.guild.id, reason, ctx.author.id))
-            await db.commit()
-            
-            # Hole Anzahl der Verwarnungen
-            async with db.execute('''
-                SELECT COUNT(*) FROM warnings 
-                WHERE user_id = ? AND guild_id = ?
-            ''', (member.id, ctx.guild.id)) as cursor:
-                warning_count = await cursor.fetchone()
-                warning_count = warning_count[0]
+        if not user_input:
+            embed = discord.Embed(
+                title="⚠️ Warn Befehl",
+                description="Verwarnt einen User.",
+                color=discord.Color.blue()
+            )
+            embed.add_field(
+                name="Verwendung",
+                value="!warn @User/ID/Name [Grund]\n"
+                      "Beispiel: !warn @User Spam im Chat"
+            )
+            await ctx.send(embed=embed)
+            return
 
-        embed = discord.Embed(
-            title="⚠️ Verwarnung",
-            description=f"{member.mention} wurde verwarnt.",
-            color=discord.Color.yellow()
-        )
-        embed.add_field(name="Grund", value=reason or "Kein Grund angegeben")
-        embed.add_field(name="Verwarnungen", value=str(warning_count))
-        
-        await ctx.send(embed=embed)
+        member = await self.get_member(ctx, user_input)
+        if member is None:
+            await ctx.send(f"❌ Konnte keinen User finden für: {user_input}")
+            return
 
-        # Logge die Warnung
-        await self.logger.log_mod_action(
-            ctx.guild,
-            "Warnung",
-            moderator=ctx.author,
-            user=member,
-            reason=reason,
-            warning_count=warning_count
-        )
+        try:
+            # In Datenbank speichern
+            async with aiosqlite.connect(DB_PATH) as db:
+                await db.execute('''
+                    INSERT INTO warnings (
+                        user_id,
+                        user_name,
+                        guild_id,
+                        moderator_id,
+                        moderator_name,
+                        reason
+                    ) VALUES (?, ?, ?, ?, ?, ?)
+                ''', (
+                    member.id,
+                    f"{member.name}#{member.discriminator}",
+                    ctx.guild.id,
+                    ctx.author.id,
+                    f"{ctx.author.name}#{ctx.author.discriminator}",
+                    reason
+                ))
+                await db.commit()
+
+                # Anzahl der Verwarnungen abrufen
+                async with db.execute('''
+                    SELECT COUNT(*) FROM warnings 
+                    WHERE user_id = ? AND guild_id = ?
+                ''', (member.id, ctx.guild.id)) as cursor:
+                    warning_count = (await cursor.fetchone())[0]
+
+            # Erstelle Embed für Log
+            embed = discord.Embed(
+                title="⚠️ Verwarnung",
+                description=f"{member.mention} wurde verwarnt.",
+                color=discord.Color.yellow()
+            )
+            embed.add_field(name="User", value=f"{member.name}#{member.discriminator}")
+            embed.add_field(name="ID", value=member.id)
+            embed.add_field(name="Grund", value=reason or "Kein Grund angegeben")
+            embed.add_field(name="Verwarnungen", value=f"{warning_count} insgesamt")
+
+            # Sende Benachrichtigungen
+            await self.send_mod_action_messages(
+                ctx, 
+                member, 
+                "Verwarnung", 
+                {'warning_count': warning_count},
+                reason=reason
+            )
+
+        except Exception as e:
+            await ctx.send(f"❌ Fehler beim Verwarnen: {str(e)}")
 
     @commands.command()
     @commands.has_permissions(kick_members=True)
-    async def warnings(self, ctx, member: discord.Member):
-        """Zeigt alle Verwarnungen eines Mitglieds"""
+    async def warnings(self, ctx, user: discord.Member):
+        """Zeigt alle Verwarnungen eines Users"""
         async with aiosqlite.connect(DB_PATH) as db:
             async with db.execute('''
-                SELECT reason, moderator_id, timestamp 
+                SELECT reason, moderator_name, timestamp 
                 FROM warnings 
                 WHERE user_id = ? AND guild_id = ?
                 ORDER BY timestamp DESC
-            ''', (member.id, ctx.guild.id)) as cursor:
+            ''', (user.id, ctx.guild.id)) as cursor:
                 warnings = await cursor.fetchall()
 
-        if not warnings:
-            await ctx.send(f"{member.mention} hat keine Verwarnungen.")
-            return
+            if not warnings:
+                await ctx.send(f"{user.mention} hat keine Verwarnungen.")
+                return
 
-        embed = discord.Embed(
-            title=f"Verwarnungen für {member.name}",
-            color=discord.Color.yellow()
-        )
-
-        for i, (reason, mod_id, timestamp) in enumerate(warnings, 1):
-            moderator = ctx.guild.get_member(mod_id)
-            mod_name = moderator.name if moderator else "Unbekannter Moderator"
-            embed.add_field(
-                name=f"Warnung {i}",
-                value=f"**Grund:** {reason or 'Kein Grund angegeben'}\n"
-                      f"**Moderator:** {mod_name}\n"
-                      f"**Datum:** {timestamp}",
-                inline=False
+            embed = discord.Embed(
+                title=f"⚠️ Verwarnungen für {user.name}",
+                color=discord.Color.yellow()
             )
 
-        await ctx.send(embed=embed)
+            for i, (reason, mod_name, timestamp) in enumerate(warnings, 1):
+                embed.add_field(
+                    name=f"Verwarnung {i} | {timestamp}",
+                    value=f"**Grund:** {reason or 'Kein Grund angegeben'}\n"
+                          f"**Moderator:** {mod_name}",
+                    inline=False
+                )
+
+            embed.set_footer(text=f"Insgesamt {len(warnings)} Verwarnung(en)")
+            await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def delwarn(self, ctx, user: discord.Member, warn_id: int):
+        """Löscht eine bestimmte Verwarnung eines Users"""
+        async with aiosqlite.connect(DB_PATH) as db:
+            # Prüfe ob die Verwarnung existiert
+            async with db.execute('''
+                SELECT id FROM warnings 
+                WHERE user_id = ? AND guild_id = ?
+                ORDER BY timestamp DESC
+            ''', (user.id, ctx.guild.id)) as cursor:
+                warnings = await cursor.fetchall()
+                
+                if not warnings or warn_id > len(warnings):
+                    await ctx.send("❌ Diese Verwarnung existiert nicht!")
+                    return
+
+                # Lösche die Verwarnung
+                warning_db_id = warnings[warn_id - 1][0]
+                await db.execute('DELETE FROM warnings WHERE id = ?', (warning_db_id,))
+                await db.commit()
+
+            embed = discord.Embed(
+                title="✅ Verwarnung gelöscht",
+                description=f"Verwarnung {warn_id} wurde von {user.mention} entfernt.",
+                color=discord.Color.green()
+            )
+            await ctx.send(embed=embed)
+
+            # Log die Aktion
+            await self.logger.log_mod_action(
+                ctx.guild,
+                "Verwarnung gelöscht",
+                user=user,
+                moderator=ctx.author,
+                content=f"Verwarnung {warn_id} wurde entfernt"
+            )
 
     @commands.command()
     @commands.has_permissions(administrator=True)

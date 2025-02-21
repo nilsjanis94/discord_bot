@@ -44,6 +44,21 @@ Bannt einen User vom Server.
   - **Berechtigung:** Administrator
   - **Beispiel:** `!setmodlog #mod-logs`
 
+### Verwarnungen
+- **User verwarnen:** `!warn @User [Grund]`
+  - Gibt einem User eine Verwarnung
+  - **Berechtigung:** Kick Members
+  - **Beispiel:** `!warn @User Spam im Chat`
+
+- **Verwarnungen anzeigen:** `!warnings @User`
+  - Zeigt alle Verwarnungen eines Users
+  - **Berechtigung:** Kick Members
+
+- **Verwarnung löschen:** `!delwarn @User [Nummer]`
+  - Löscht eine bestimmte Verwarnung
+  - **Berechtigung:** Administrator
+  - **Beispiel:** `!delwarn @User 1`
+
 ## Wetter-System
 
 ### Wetter abfragen

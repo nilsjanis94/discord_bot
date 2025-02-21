@@ -240,7 +240,8 @@ class ModerationCommands(commands.Cog):
                 moderator=ctx.author,
                 reason=reason,
                 duration=duration,
-                expires_at=embed_data.get('expires_at', None)
+                expires_at=embed_data['expires_at'] if isinstance(embed_data, dict) and 'expires_at' in embed_data else None,
+                warning_count=embed_data['warning_count'] if isinstance(embed_data, dict) and 'warning_count' in embed_data else None
             )
 
             # Dann: Kurze Bestätigung im Befehlskanal
@@ -260,6 +261,8 @@ class ModerationCommands(commands.Cog):
                 user_embed.add_field(name="Grund", value=reason)
             if duration:
                 user_embed.add_field(name="Dauer", value=duration)
+            if isinstance(embed_data, dict) and 'warning_count' in embed_data:
+                user_embed.add_field(name="Verwarnungen", value=f"Du hast jetzt {embed_data['warning_count']} Verwarnung(en)")
             
             try:
                 await member.send(embed=user_embed)

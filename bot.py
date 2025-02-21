@@ -1,25 +1,35 @@
 import discord
 from discord.ext import commands
-from config import DISCORD_TOKEN
+import os
+from dotenv import load_dotenv
+import aiosqlite
+from utils.db import init_db, DB_PATH
 
-# Bot-Konfiguration mit allen notwendigen Intents
-intents = discord.Intents.default()
-intents.message_content = True  # Für Nachrichteninhalte
-intents.members = True         # Für Mitglieder-bezogene Aktionen
-intents.guilds = True         # Für Server-bezogene Aktionen
-intents.bans = True           # Für Ban-bezogene Aktionen
+# Lade Umgebungsvariablen
+load_dotenv()
+TOKEN = os.getenv('DISCORD_TOKEN')
 
+# Bot Konfiguration
+intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-# Cogs laden
-async def load_extensions():
-    await bot.load_extension("cogs.moderation_commands")
-    await bot.load_extension("cogs.weather_commands")
-    await bot.load_extension("cogs.welcome_system")
-
+# Startup Event
 @bot.event
 async def on_ready():
-    await load_extensions()
-    print(f'Bot ist online als {bot.user.name} und Befehle sind geladen!')
+    print(f'{bot.user} ist online!')
+    
+    # Initialisiere Datenbank
+    await init_db()
+    
+    # Lade alle Cogs
+    for filename in os.listdir('./cogs'):
+        if filename.endswith('.py'):
+            try:
+                await bot.load_extension(f'cogs.{filename[:-3]}')
+                print(f'Loaded {filename}')
+            except Exception as e:
+                print(f'Failed to load {filename}')
+                print(f'Error: {str(e)}')
 
-bot.run(DISCORD_TOKEN)
+# Bot starten
+bot.run(TOKEN)

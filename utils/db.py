@@ -3,80 +3,38 @@ import aiosqlite
 import os
 from datetime import datetime
 
-DB_PATH = "data/moderation.db"
+# Definiere den Pfad zur Datenbank
+DB_PATH = os.path.join('data', 'moderation.db')
 
-# Stelle sicher, dass der Ordner existiert
-os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+# Stelle sicher, dass der data Ordner existiert
+os.makedirs('data', exist_ok=True)
 
 async def init_db():
     """Initialisiert die Datenbank und erstellt die benötigten Tabellen"""
     async with aiosqlite.connect(DB_PATH) as db:
-        # Erstelle zuerst die channel_config Tabelle
+        # Tabelle für Moderations-Aktionen
         await db.execute('''
-            CREATE TABLE IF NOT EXISTS channel_config (
-                guild_id INTEGER PRIMARY KEY,
-                mod_log_channel_id INTEGER,
+            CREATE TABLE IF NOT EXISTS mod_actions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                guild_id INTEGER,
+                user_id INTEGER,
+                moderator_id INTEGER,
+                action_type TEXT,
+                reason TEXT,
+                duration INTEGER,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         ''')
-        
+
         # Tabelle für Verwarnungen
         await db.execute('''
             CREATE TABLE IF NOT EXISTS warnings (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                user_name TEXT NOT NULL,
-                guild_id INTEGER NOT NULL,
-                reason TEXT,
-                moderator_id INTEGER NOT NULL,
-                moderator_name TEXT NOT NULL,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        # Tabelle für Timeouts
-        await db.execute('''
-            CREATE TABLE IF NOT EXISTS timeouts (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                user_name TEXT NOT NULL,
-                guild_id INTEGER NOT NULL,
-                moderator_id INTEGER NOT NULL,
-                moderator_name TEXT NOT NULL,
-                duration_minutes INTEGER NOT NULL,
-                reason TEXT,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                expires_at DATETIME NOT NULL
-            )
-        ''')
-
-        # Tabelle für Kicks
-        await db.execute('''
-            CREATE TABLE IF NOT EXISTS kicks (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                user_name TEXT NOT NULL,
-                guild_id INTEGER NOT NULL,
-                moderator_id INTEGER NOT NULL,
-                moderator_name TEXT NOT NULL,
+                guild_id INTEGER,
+                user_id INTEGER,
+                moderator_id INTEGER,
                 reason TEXT,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-
-        # Tabelle für Bans
-        await db.execute('''
-            CREATE TABLE IF NOT EXISTS bans (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                user_name TEXT NOT NULL,
-                guild_id INTEGER NOT NULL,
-                moderator_id INTEGER NOT NULL,
-                moderator_name TEXT NOT NULL,
-                reason TEXT,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                is_temporary BOOLEAN DEFAULT 0,
-                expires_at DATETIME
             )
         ''')
 
@@ -94,6 +52,54 @@ async def init_db():
                 verified_role_id INTEGER,
                 enabled BOOLEAN DEFAULT 1,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
+        # Tabelle für Auto-Mod Konfiguration
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS automod_config (
+                guild_id INTEGER PRIMARY KEY,
+                spam_detection BOOLEAN DEFAULT 0,
+                spam_threshold INTEGER DEFAULT 5,
+                spam_interval INTEGER DEFAULT 5,
+                link_filter BOOLEAN DEFAULT 0,
+                allowed_links TEXT,
+                caps_filter BOOLEAN DEFAULT 0,
+                caps_threshold INTEGER DEFAULT 70,
+                emoji_filter BOOLEAN DEFAULT 0,
+                emoji_threshold INTEGER DEFAULT 5,
+                flood_filter BOOLEAN DEFAULT 0,
+                flood_threshold INTEGER DEFAULT 5,
+                flood_interval INTEGER DEFAULT 3,
+                enabled BOOLEAN DEFAULT 0,
+                log_channel_id INTEGER,
+                whitelist_roles TEXT,
+                whitelist_channels TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
+        # Tabelle für Wort-Filter
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS word_filter (
+                guild_id INTEGER,
+                word TEXT,
+                action TEXT DEFAULT 'delete',
+                added_by INTEGER,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (guild_id, word)
+            )
+        ''')
+
+        # Tabelle für Spam-Tracking
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS spam_tracking (
+                guild_id INTEGER,
+                user_id INTEGER,
+                message_count INTEGER DEFAULT 1,
+                last_message TEXT,
+                last_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (guild_id, user_id)
             )
         ''')
         

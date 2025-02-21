@@ -207,4 +207,122 @@
 ## Updates
 - Neue Befehle werden in diesem Dokument dokumentiert
 - Änderungen an bestehenden Befehlen werden hier aufgeführt
-- Letzte Aktualisierung: [Datum] 
+- Letzte Aktualisierung: [Datum]
+
+## Auto-Moderation
+
+### Grundeinstellungen
+- **System aktivieren:** `!automod enable`
+  - Aktiviert die Auto-Moderation
+  - **Berechtigung:** Administrator
+
+- **System deaktivieren:** `!automod disable`
+  - Deaktiviert die Auto-Moderation
+  - **Berechtigung:** Administrator
+
+- **Status anzeigen:** `!automod status`
+  - Zeigt aktuelle Einstellungen
+  - **Berechtigung:** Administrator
+
+- **Log-Kanal setzen:** `!automod log #kanal`
+  - Legt fest, wo Verstöße protokolliert werden
+  - **Berechtigung:** Administrator
+
+### Filter-Einstellungen
+
+#### Spam-Schutz
+- **Befehl:** `!automod spam <an/aus> [schwelle] [interval]`
+  - **Schwelle:** Anzahl ähnlicher Nachrichten (Standard: 5)
+  - **Interval:** Zeitraum in Sekunden (Standard: 5)
+  - **Beispiel:** `!automod spam an 5 10`
+
+#### Link-Filter
+- **Befehl:** `!automod links <an/aus>`
+  - Blockiert nicht erlaubte Links
+  - Whitelist für vertrauenswürdige Domains
+
+#### CAPS-Filter
+- **Befehl:** `!automod caps <an/aus> [schwelle]`
+  - **Schwelle:** Prozentsatz Großbuchstaben (Standard: 70)
+  - **Beispiel:** `!automod caps an 80`
+
+#### Emoji-Filter
+- **Befehl:** `!automod emoji <an/aus> [schwelle]`
+  - **Schwelle:** Maximale Anzahl Emojis (Standard: 5)
+  - **Beispiel:** `!automod emoji an 7`
+
+#### Flood-Schutz
+- **Befehl:** `!automod flood <an/aus> [nachrichten] [sekunden]`
+  - Verhindert zu schnelles Nachrichtenspamming
+  - **Beispiel:** `!automod flood an 5 3`
+
+### Wort-Filter
+- **Wort hinzufügen:** `!automod addword <wort>`
+  - Fügt Wort zur Blacklist hinzu
+  - **Berechtigung:** Administrator
+
+- **Wort entfernen:** `!automod delword <wort>`
+  - Entfernt Wort von der Blacklist
+  - **Berechtigung:** Administrator
+
+- **Liste anzeigen:** `!automod words`
+  - Zeigt alle gefilterten Wörter
+  - **Berechtigung:** Administrator
+
+### Whitelist
+- **Rolle ausnehmen:** `!automod whitelist role @rolle`
+  - Nimmt eine Rolle von allen Filtern aus
+  - **Berechtigung:** Administrator
+
+- **Kanal ausnehmen:** `!automod whitelist channel #kanal`
+  - Nimmt einen Kanal von allen Filtern aus
+  - **Berechtigung:** Administrator
+
+### Features
+- **Spam-Erkennung**
+  - Erkennt wiederholte Nachrichten
+  - Konfigurierbare Schwelle und Zeitintervall
+  - Automatische Nachrichtenlöschung
+
+- **Link-Filter**
+  - Blockiert nicht erlaubte Links
+  - Whitelist für vertrauenswürdige Domains
+  - Schutz vor Phishing/Spam-Links
+
+- **CAPS-Filter**
+  - Erkennt übermäßige Großschreibung
+  - Ignoriert kurze Nachrichten
+  - Konfigurierbare Schwelle
+
+- **Emoji-Spam-Filter**
+  - Begrenzt Emoji-Anzahl pro Nachricht
+  - Erkennt Custom und Unicode Emojis
+  - Konfigurierbare Schwelle
+
+- **Flood-Schutz**
+  - Verhindert Nachrichtenflut
+  - Zeitbasierte Erkennung
+  - Konfigurierbare Parameter
+
+- **Wort-Filter**
+  - Blacklist für verbotene Wörter
+  - Automatische Nachrichtenlöschung
+  - Einfache Verwaltung
+
+### Benachrichtigungen
+- Verstöße werden im Log-Kanal protokolliert
+- Betroffene User erhalten eine DM
+- Detaillierte Verstoß-Informationen
+- Nachvollziehbare Moderationsaktionen
+
+### Hinweise
+- Whitelist-Rollen sind von allen Filtern ausgenommen
+- Whitelist-Kanäle werden nicht überwacht
+- Bot benötigt "Nachrichten verwalten" Berechtigung
+- Logs erfordern "Nachrichten senden" im Log-Kanal
+
+### Fehlerbehebung
+- Prüfe Bot-Berechtigungen
+- Stelle sicher, dass der Log-Kanal existiert
+- Verifiziere Whitelist-Einstellungen
+- Überprüfe Filter-Schwellenwerte 

@@ -1,6 +1,10 @@
 # Datenbank
-data/*.db
-data/moderation.db
+/data/*.db
+/data/moderation.db
+/data/word_filter.json
+
+!/data/
+/data/*
 
 # Python
 __pycache__/

@@ -11,11 +11,8 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 
 # Cogs laden
 async def load_extensions():
-    await bot.load_extension("cogs.basic_commands")
+
     await bot.load_extension("cogs.moderation_commands")
-    await bot.load_extension("cogs.utility_commands")
-    await bot.load_extension("cogs.fun_commands")
-    await bot.load_extension("cogs.music_commands")
     await bot.load_extension("cogs.weather_commands")
 
 @bot.event

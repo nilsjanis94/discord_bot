@@ -44,6 +44,30 @@ Bannt einen User vom Server.
   - **Berechtigung:** Administrator
   - **Beispiel:** `!setmodlog #mod-logs`
 
+## Wetter-System
+
+### Wetter abfragen
+- **Aktuelles Wetter:** `!wetter [Stadt]`
+  - Zeigt das aktuelle Wetter für die angegebene Stadt
+  - **Beispiel:** `!wetter Berlin`
+  - Zeigt:
+    - Temperatur
+    - Gefühlte Temperatur
+    - Luftfeuchtigkeit
+    - Windgeschwindigkeit
+    - Wetterbeschreibung
+    - Sonnenauf- und untergang
+
+- **5-Tage Vorhersage:** `!wettervorhersage [Stadt]`
+  - Zeigt die Wettervorhersage für die nächsten 5 Tage
+  - **Beispiel:** `!wettervorhersage Hamburg`
+
+### Wetter-Benachrichtigungen
+- **Wetter-Updates aktivieren:** `!wetter_updates [Stadt] [Kanal]`
+  - Sendet tägliche Wetterupdates in den angegebenen Kanal
+  - **Berechtigung:** Administrator
+  - **Beispiel:** `!wetter_updates Berlin #wetter`
+
 ## Funktionsweise
 
 ### Mod-Logs
@@ -66,16 +90,24 @@ Bannt einen User vom Server.
 - Historie kann jederzeit eingesehen werden
 - Separate Logs für verschiedene Aktionstypen
 
+### Wetter-API
+- Nutzt OpenWeatherMap API
+- Automatische Aktualisierung der Wetterdaten
+- Unterstützung für weltweite Städte
+- Temperaturen in Celsius
+
 ## Hinweise
 - DMs müssen vom User aktiviert sein, um Benachrichtigungen zu erhalten
 - Timeouts können nicht länger als 28 Tage sein (Discord-Limit)
 - Der Bot benötigt entsprechende Berechtigungen für alle Aktionen
 - Mod-Logs sollten in einem geschützten Kanal eingerichtet werden
+- Wetter-Updates benötigen einen gültigen API-Schlüssel
 
 ## Fehlerbehebung
 - Bei fehlenden Berechtigungen wird eine Fehlermeldung angezeigt
 - DM-Fehler werden im Mod-Log protokolliert
 - Bei Problemen mit Timeouts wird der Grund angegeben
+- Ungültige Städtenamen werden mit einer Fehlermeldung quittiert
 
 ## Updates
 - Neue Befehle werden in diesem Dokument dokumentiert

@@ -256,24 +256,6 @@ Bei Fragen oder Problemen:
 - Unterstützung für weltweite Städte
 - Temperaturen in Celsius
 
-## Hinweise
-- DMs müssen vom User aktiviert sein, um Benachrichtigungen zu erhalten
-- Timeouts können nicht länger als 28 Tage sein (Discord-Limit)
-- Der Bot benötigt entsprechende Berechtigungen für alle Aktionen
-- Mod-Logs sollten in einem geschützten Kanal eingerichtet werden
-- Wetter-Updates benötigen einen gültigen API-Schlüssel
-
-## Fehlerbehebung
-- Bei fehlenden Berechtigungen wird eine Fehlermeldung angezeigt
-- DM-Fehler werden im Mod-Log protokolliert
-- Bei Problemen mit Timeouts wird der Grund angegeben
-- Ungültige Städtenamen werden mit einer Fehlermeldung quittiert
-
-## Updates
-- Neue Befehle werden in diesem Dokument dokumentiert
-- Änderungen an bestehenden Befehlen werden hier aufgeführt
-- Letzte Aktualisierung: [Datum]
-
 ## Moderationsprotokoll
 - **Mod-Logs einsehen:** `!modlogs @User`
   - Zeigt alle Moderationsaktionen für einen User

@@ -37,78 +37,74 @@ class ModerationCommands(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(kick_members=True)
-    async def warn(self, ctx, user_input: str = None, *, reason=None):
-        """Verwarnt ein Mitglied"""
-        if not user_input:
-            embed = discord.Embed(
-                title="⚠️ Warn Befehl",
-                description="Verwarnt einen User.",
-                color=discord.Color.blue()
-            )
-            embed.add_field(
-                name="Verwendung",
-                value="!warn @User/ID/Name [Grund]\n"
-                      "Beispiel: !warn @User Spam im Chat"
-            )
-            await ctx.send(embed=embed)
-            return
+    async def warn(self, ctx, member: discord.Member, *, reason: str = None):
+        """Verwarnt einen User"""
+        if not reason:
+            return await ctx.send("❌ Bitte gib einen Grund für die Verwarnung an!")
 
-        member = await self.get_member(ctx, user_input)
-        if member is None:
-            await ctx.send(f"❌ Konnte keinen User finden für: {user_input}")
-            return
+        if member.bot:
+            return await ctx.send("❌ Bots können nicht verwarnt werden!")
+
+        if member == ctx.author:
+            return await ctx.send("❌ Du kannst dich nicht selbst verwarnen!")
+
+        if member.top_role >= ctx.author.top_role:
+            return await ctx.send("❌ Du kannst keine Mitglieder verwarnen, die eine höhere oder gleiche Rolle haben!")
 
         try:
-            # In Datenbank speichern
+            # Speichere Verwarnung in der Datenbank
             async with aiosqlite.connect(DB_PATH) as db:
                 await db.execute('''
-                    INSERT INTO warnings (
-                        user_id,
-                        user_name,
-                        guild_id,
-                        moderator_id,
-                        moderator_name,
-                        reason
-                    ) VALUES (?, ?, ?, ?, ?, ?)
-                ''', (
-                    member.id,
-                    f"{member.name}#{member.discriminator}",
-                    ctx.guild.id,
-                    ctx.author.id,
-                    f"{ctx.author.name}#{ctx.author.discriminator}",
-                    reason
-                ))
+                    INSERT INTO warnings 
+                    (user_id, user_name, guild_id, reason, moderator_id, moderator_name)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ''', (member.id, str(member), ctx.guild.id, reason, ctx.author.id, str(ctx.author)))
                 await db.commit()
 
-                # Anzahl der Verwarnungen abrufen
-                async with db.execute('''
-                    SELECT COUNT(*) FROM warnings 
-                    WHERE user_id = ? AND guild_id = ?
-                ''', (member.id, ctx.guild.id)) as cursor:
+            # Benachrichtige den User
+            try:
+                embed = discord.Embed(
+                    title="⚠️ Verwarnung erhalten",
+                    description=f"Du wurdest auf **{ctx.guild.name}** verwarnt.",
+                    color=discord.Color.yellow()
+                )
+                embed.add_field(name="Grund", value=reason)
+                embed.add_field(name="Moderator", value=ctx.author.name)
+                await member.send(embed=embed)
+            except discord.Forbidden:
+                await ctx.send("⚠️ Der User konnte nicht per DM benachrichtigt werden.")
+
+            # Log die Aktion
+            async with aiosqlite.connect(DB_PATH) as db:
+                async with db.execute('SELECT COUNT(*) FROM warnings WHERE user_id = ? AND guild_id = ?', 
+                                    (member.id, ctx.guild.id)) as cursor:
                     warning_count = (await cursor.fetchone())[0]
 
-            # Erstelle Embed für Log
-            embed = discord.Embed(
-                title="⚠️ Verwarnung",
-                description=f"{member.mention} wurde verwarnt.",
-                color=discord.Color.yellow()
-            )
-            embed.add_field(name="User", value=f"{member.name}#{member.discriminator}")
-            embed.add_field(name="ID", value=member.id)
-            embed.add_field(name="Grund", value=reason or "Kein Grund angegeben")
-            embed.add_field(name="Verwarnungen", value=f"{warning_count} insgesamt")
+            # Sende Log-Nachricht
+            async with aiosqlite.connect(DB_PATH) as db:
+                async with db.execute('SELECT mod_log_channel_id FROM channel_config WHERE guild_id = ?', 
+                                    (ctx.guild.id,)) as cursor:
+                    row = await cursor.fetchone()
+                    if row and row[0]:
+                        log_channel = ctx.guild.get_channel(row[0])
+                        if log_channel:
+                            embed = discord.Embed(
+                                title="⚠️ Verwarnung ausgesprochen",
+                                color=discord.Color.yellow(),
+                                timestamp=datetime.datetime.now(datetime.timezone.utc)
+                            )
+                            embed.add_field(name="User", value=f"{member.mention} ({member.id})")
+                            embed.add_field(name="Moderator", value=f"{ctx.author.mention} ({ctx.author.id})")
+                            embed.add_field(name="Grund", value=reason, inline=False)
+                            embed.add_field(name="Verwarnungen", value=f"Dies ist Verwarnung #{warning_count}")
+                            await log_channel.send(embed=embed)
 
-            # Sende Benachrichtigungen
-            await self.send_mod_action_messages(
-                ctx, 
-                member, 
-                "Verwarnung", 
-                {'warning_count': warning_count},
-                reason=reason
-            )
+            # Bestätige die Verwarnung
+            await ctx.send(f"✅ {member.mention} wurde verwarnt! (Verwarnung #{warning_count})")
 
         except Exception as e:
-            await ctx.send(f"❌ Fehler beim Verwarnen: {str(e)}")
+            print(f"Fehler beim Verwarnen: {e}")
+            await ctx.send("❌ Es ist ein Fehler aufgetreten!")
 
     @commands.command()
     @commands.has_permissions(kick_members=True)
@@ -412,77 +408,78 @@ class ModerationCommands(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(kick_members=True)
-    async def kick(self, ctx, user_input: str = None, *, reason=None):
-        """Kickt ein Mitglied vom Server"""
-        if not user_input:
-            embed = discord.Embed(
-                title="👢 Kick Befehl",
-                description="Kickt einen User vom Server.",
-                color=discord.Color.blue()
-            )
-            embed.add_field(
-                name="Verwendung",
-                value="!kick @User/ID/Name [Grund]\n"
-                      "Beispiel: !kick @User Regelverstoß"
-            )
-            await ctx.send(embed=embed)
-            return
+    async def kick(self, ctx, member: discord.Member, *, reason: str = None):
+        """Kickt einen User vom Server"""
+        if not reason:
+            return await ctx.send("❌ Bitte gib einen Grund für den Kick an!")
 
-        member = await self.get_member(ctx, user_input)
-        if member is None:
-            await ctx.send(f"❌ Konnte keinen User finden für: {user_input}")
-            return
+        if member.bot:
+            return await ctx.send("❌ Bots können nicht gekickt werden!")
+
+        if member == ctx.author:
+            return await ctx.send("❌ Du kannst dich nicht selbst kicken!")
+
+        if member.top_role >= ctx.author.top_role:
+            return await ctx.send("❌ Du kannst keine Mitglieder kicken, die eine höhere oder gleiche Rolle haben!")
 
         try:
-            # Erstelle Embed für Log
-            embed = discord.Embed(
-                title="👢 Kick",
-                description=f"{member.mention} wurde vom Server gekickt.",
-                color=discord.Color.red()
-            )
-            embed.add_field(name="User", value=f"{member.name}#{member.discriminator}")
-            embed.add_field(name="ID", value=member.id)
-            embed.add_field(name="Grund", value=reason or "Kein Grund angegeben")
+            # DM an den User
+            try:
+                embed = discord.Embed(
+                    title="🚫 Vom Server gekickt",
+                    description=f"Du wurdest von **{ctx.guild.name}** gekickt.",
+                    color=discord.Color.red()
+                )
+                embed.add_field(name="Grund", value=reason)
+                embed.add_field(name="Moderator", value=ctx.author.name)
+                await member.send(embed=embed)
+            except discord.Forbidden:
+                await ctx.send("⚠️ Der User konnte nicht per DM benachrichtigt werden.")
 
-            # Sende Benachrichtigungen
-            await self.send_mod_action_messages(
-                ctx, 
-                member, 
-                "Kick", 
-                embed,
-                reason=reason
-            )
-
-            # Führe Kick durch
+            # Kick durchführen
             await member.kick(reason=reason)
 
-            # Speichere in Datenbank
+            # Log-Nachricht senden
             async with aiosqlite.connect(DB_PATH) as db:
-                await db.execute('''
-                    INSERT INTO kicks (
-                        user_id,
-                        user_name,
-                        guild_id,
-                        moderator_id,
-                        moderator_name,
-                        reason
-                    ) VALUES (?, ?, ?, ?, ?, ?)
-                ''', (
-                    member.id,
-                    f"{member.name}#{member.discriminator}",
-                    ctx.guild.id,
-                    ctx.author.id,
-                    f"{ctx.author.name}#{ctx.author.discriminator}",
-                    reason
-                ))
-                await db.commit()
+                async with db.execute('SELECT mod_log_channel_id FROM channel_config WHERE guild_id = ?', 
+                                    (ctx.guild.id,)) as cursor:
+                    row = await cursor.fetchone()
+                    if row and row[0]:
+                        log_channel = ctx.guild.get_channel(row[0])
+                        if log_channel:
+                            embed = discord.Embed(
+                                title="🚫 Mitglied gekickt",
+                                color=discord.Color.red(),
+                                timestamp=datetime.datetime.now(datetime.timezone.utc)
+                            )
+                            embed.add_field(name="User", value=f"{member} ({member.id})")
+                            embed.add_field(name="Moderator", value=f"{ctx.author.mention} ({ctx.author.id})")
+                            embed.add_field(name="Grund", value=reason, inline=False)
+                            
+                            # Verwarnungshistorie hinzufügen
+                            async with db.execute('''
+                                SELECT COUNT(*) 
+                                FROM warnings 
+                                WHERE user_id = ? AND guild_id = ?
+                            ''', (member.id, ctx.guild.id)) as warning_cursor:
+                                warning_count = (await warning_cursor.fetchone())[0]
+                                if warning_count > 0:
+                                    embed.add_field(
+                                        name="Verwarnungen", 
+                                        value=f"Der User hatte {warning_count} Verwarnung(en)",
+                                        inline=False
+                                    )
+                            
+                            await log_channel.send(embed=embed)
 
-            await ctx.send(embed=embed)
+            # Bestätigung senden
+            await ctx.send(f"✅ {member} wurde vom Server gekickt!")
 
         except discord.Forbidden:
             await ctx.send("❌ Ich habe keine Berechtigung, diesen User zu kicken!")
-        except discord.HTTPException as e:
-            await ctx.send(f"❌ Es gab einen Fehler beim Kicken: {str(e)}")
+        except Exception as e:
+            print(f"Fehler beim Kicken: {e}")
+            await ctx.send("❌ Es ist ein Fehler aufgetreten!")
 
     @commands.command()
     @commands.has_permissions(ban_members=True)
@@ -751,17 +748,21 @@ class ModerationCommands(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(administrator=True)
-    async def setmodlog(self, ctx, channel: discord.TextChannel = None):
+    async def setmodlog(self, ctx, channel: discord.TextChannel):
         """Setzt den Kanal für Moderations-Logs"""
-        channel = channel or ctx.channel
-        await self.logger.set_mod_channel(ctx.guild.id, channel.id)
-        
-        embed = discord.Embed(
-            title="✅ Mod-Log Kanal gesetzt",
-            description=f"Moderations-Logs werden nun in {channel.mention} gesendet.",
-            color=discord.Color.green()
-        )
-        await ctx.send(embed=embed)
+        try:
+            async with aiosqlite.connect(DB_PATH) as db:
+                await db.execute('''
+                    INSERT OR REPLACE INTO channel_config 
+                    (guild_id, mod_log_channel_id) 
+                    VALUES (?, ?)
+                ''', (ctx.guild.id, channel.id))
+                await db.commit()
+            
+            await ctx.send(f"✅ Mod-Log Kanal wurde auf {channel.mention} gesetzt!")
+        except Exception as e:
+            print(f"Fehler beim Setzen des Mod-Log Kanals: {e}")
+            await ctx.send("❌ Es ist ein Fehler aufgetreten!")
 
 async def setup(bot):
     await bot.add_cog(ModerationCommands(bot)) 

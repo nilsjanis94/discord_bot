@@ -9,79 +9,150 @@ class WelcomeSystem(commands.Cog):
         self.bot = bot
         self.welcome_configs = {}
         self.pending_verifications = {}
-        
-    async def cog_load(self):
-        """Lädt die Willkommens-Konfigurationen aus der Datenbank"""
+        # Lade Konfigurationen beim Start
+        self.bot.loop.create_task(self.load_configs())
+
+    async def load_configs(self):
+        """Lädt alle Server-Konfigurationen"""
+        try:
+            async with aiosqlite.connect(DB_PATH) as db:
+                async with db.execute('''
+                    SELECT guild_id, welcome_channel_id, rules_channel_id, 
+                           temp_role_id, verified_role_id, welcome_message, enabled
+                    FROM welcome_config
+                ''') as cursor:
+                    async for row in cursor:
+                        self.welcome_configs[row[0]] = {
+                            'welcome_channel_id': row[1],
+                            'rules_channel_id': row[2],
+                            'temp_role_id': row[3],
+                            'verified_role_id': row[4],
+                            'welcome_message': row[5],
+                            'enabled': row[6]
+                        }
+            print("✅ Willkommenssystem Konfigurationen geladen")
+        except Exception as e:
+            print(f"❌ Fehler beim Laden der Willkommenssystem Konfigurationen: {e}")
+
+    async def create_rules_message(self, guild_id):
+        """Erstellt die Regelnachricht mit Button"""
         async with aiosqlite.connect(DB_PATH) as db:
             async with db.execute('''
-                SELECT guild_id, welcome_channel_id, rules_channel_id, 
-                       verification_channel_id, welcome_message, welcome_role_id,
-                       rules_message_id, temp_role_id, verified_role_id, enabled
-                FROM welcome_config
-            ''') as cursor:
-                async for row in cursor:
-                    self.welcome_configs[row[0]] = {
-                        'welcome_channel_id': row[1],
-                        'rules_channel_id': row[2],
-                        'verification_channel_id': row[3],
-                        'welcome_message': row[4],
-                        'welcome_role_id': row[5],
-                        'rules_message_id': row[6],
-                        'temp_role_id': row[7],
-                        'verified_role_id': row[8],
-                        'enabled': row[9]
-                    }
+                SELECT rule_number, rule_title, rule_content 
+                FROM server_rules 
+                WHERE guild_id = ? 
+                ORDER BY rule_number
+            ''', (guild_id,)) as cursor:
+                rules = await cursor.fetchall()
+
+        embed = discord.Embed(
+            title="📜 Serverregeln",
+            description="Bitte lies dir die folgenden Regeln durch und akzeptiere sie mit dem Button unten.",
+            color=discord.Color.blue()
+        )
+
+        for number, title, content in rules:
+            embed.add_field(
+                name=f"§{number} {title or ''}",
+                value=content,
+                inline=False)
+
+        # Erstelle Button zum Akzeptieren
+        view = RulesView()
+        return embed, view
 
     @commands.group(invoke_without_command=True)
     @commands.has_permissions(administrator=True)
     async def welcome(self, ctx):
         """Willkommenssystem Befehle"""
-        embed = discord.Embed(
-            title="👋 Willkommenssystem Befehle",
-            description="Verwalte das Willkommenssystem",
-            color=discord.Color.blue()
-        )
-        embed.add_field(
-            name="Konfiguration",
-            value="`!welcome channel #kanal` - Setzt den Willkommenskanal\n"
-                  "`!welcome message <Nachricht>` - Setzt die Willkommensnachricht\n"
-                  "`!welcome role @rolle` - Setzt die automatische Rolle\n"
-                  "`!welcome rules #kanal` - Setzt den Regelkanal\n"
-                  "`!welcome verify #kanal` - Setzt den Verifikationskanal\n"
-                  "`!welcome test` - Testet das Willkommenssystem\n"
-                  "`!welcome toggle` - Aktiviert/Deaktiviert das System",
-            inline=False
-        )
-        embed.add_field(
-            name="Platzhalter für Nachrichten",
-            value="{user} - Username\n"
-                  "{mention} - User Mention\n"
-                  "{server} - Servername\n"
-                  "{count} - Mitgliederzahl",
-            inline=False
-        )
-        await ctx.send(embed=embed)
+        if ctx.invoked_subcommand is None:
+            await ctx.send("""
+🔧 **Willkommenssystem Befehle:**
+`!welcome setup` - Richtet das Willkommenssystem ein
+`!welcome channel #kanal` - Setzt den Willkommenskanal
+`!welcome message <nachricht>` - Setzt die Willkommensnachricht
+`!welcome rules #kanal` - Setzt den Regelkanal
+`!welcome test` - Testet das System
+            """)
+
+    @welcome.command(name="setup")
+    @commands.has_permissions(administrator=True)
+    async def setup_welcome(self, ctx):
+        """Richtet das Willkommenssystem ein"""
+        try:
+            # Erstelle Unverified Rolle falls nicht vorhanden
+            unverified_role = discord.utils.get(ctx.guild.roles, name="Unverified")
+            if not unverified_role:
+                unverified_role = await ctx.guild.create_role(
+                    name="Unverified",
+                    color=discord.Color.light_grey(),
+                    reason="Willkommenssystem Setup"
+                )
+
+            # Erstelle Verified Rolle falls nicht vorhanden
+            verified_role = discord.utils.get(ctx.guild.roles, name="Verified")
+            if not verified_role:
+                verified_role = await ctx.guild.create_role(
+                    name="Verified",
+                    color=discord.Color.green(),
+                    reason="Willkommenssystem Setup"
+                )
+
+            # Speichere Konfiguration in der Datenbank
+            async with aiosqlite.connect(DB_PATH) as db:
+                await db.execute('''
+                    INSERT OR REPLACE INTO welcome_config 
+                    (guild_id, temp_role_id, verified_role_id, enabled) 
+                    VALUES (?, ?, ?, 1)
+                ''', (ctx.guild.id, unverified_role.id, verified_role.id))
+                await db.commit()
+
+            # Bestätigungsnachricht
+            embed = discord.Embed(
+                title="✅ Willkommenssystem eingerichtet!",
+                color=discord.Color.green()
+            )
+            embed.add_field(name="Temporäre Rolle", value=f"@{unverified_role.name}", inline=False)
+            embed.add_field(name="Verifizierte Rolle", value=f"@{verified_role.name}", inline=False)
+            embed.add_field(name="Regelakzeptanz", value="aktiviert", inline=False)
+            embed.add_field(
+                name="Nächste Schritte", 
+                value="1. `!welcome channel #kanal` - Willkommenskanal festlegen\n" +
+                      "2. `!welcome rules #kanal` - Regelkanal festlegen", 
+                inline=False
+            )
+
+            await ctx.send(embed=embed)
+
+        except Exception as e:
+            print(f"Fehler beim Setup des Willkommenssystems: {e}")
+            await ctx.send("❌ Es ist ein Fehler aufgetreten!")
 
     @welcome.command(name="channel")
     @commands.has_permissions(administrator=True)
     async def set_welcome_channel(self, ctx, channel: discord.TextChannel):
         """Setzt den Willkommenskanal"""
-        async with aiosqlite.connect(DB_PATH) as db:
-            await db.execute('''
-                INSERT OR REPLACE INTO welcome_config 
-                (guild_id, welcome_channel_id) 
-                VALUES (?, ?)
-            ''', (ctx.guild.id, channel.id))
-            await db.commit()
-            
-        self.welcome_configs.setdefault(ctx.guild.id, {})['welcome_channel_id'] = channel.id
-        
-        embed = discord.Embed(
-            title="✅ Willkommenskanal gesetzt",
-            description=f"Willkommensnachrichten werden nun in {channel.mention} gesendet.",
-            color=discord.Color.green()
-        )
-        await ctx.send(embed=embed)
+        try:
+            async with aiosqlite.connect(DB_PATH) as db:
+                await db.execute('''
+                    UPDATE welcome_config 
+                    SET welcome_channel_id = ?
+                    WHERE guild_id = ?
+                ''', (channel.id, ctx.guild.id))
+                await db.commit()
+
+            await ctx.send(f"✅ Willkommenskanal wurde auf {channel.mention} gesetzt!")
+
+        except Exception as e:
+            print(f"Fehler beim Setzen des Willkommenskanals: {e}")
+            await ctx.send("❌ Es ist ein Fehler aufgetreten!")
+
+    @set_welcome_channel.error
+    async def set_welcome_channel_error(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("❌ Bitte gib einen Kanal an! Beispiel: `!welcome channel #willkommen`")
+        elif isinstance(error, commands.ChannelNotFound):
+            await ctx.send("❌ Kanal nicht gefunden! Bitte erwähne einen gültigen Kanal.")
 
     @welcome.command(name="message")
     @commands.has_permissions(administrator=True)
@@ -92,25 +163,28 @@ class WelcomeSystem(commands.Cog):
                 INSERT OR REPLACE INTO welcome_config 
                 (guild_id, welcome_message) 
                 VALUES (?, ?)
-            ''', (ctx.guild.id, message))
+                ''', (ctx.guild.id, message))
             await db.commit()
-            
-        self.welcome_configs.setdefault(ctx.guild.id, {})['welcome_message'] = message
-        
-        # Zeige Vorschau
-        preview = message.replace("{user}", ctx.author.name)\
-                        .replace("{mention}", ctx.author.mention)\
-                        .replace("{server}", ctx.guild.name)\
-                        .replace("{count}", str(ctx.guild.member_count))
-        
-        embed = discord.Embed(
-            title="✅ Willkommensnachricht gesetzt",
-            description="**Vorschau:**\n" + preview,
-            color=discord.Color.green()
-        )
-        await ctx.send(embed=embed)
 
-    @welcome.command(name="role")
+        await ctx.send(f"✅ Willkommensnachricht wurde gesetzt auf:\n{message}")
+
+    @set_welcome_message.error
+    async def set_welcome_message_error(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("""
+❌ Bitte gib eine Nachricht an!
+
+**Beispiel:**
+`!welcome message Willkommen {user} auf {server}!`
+
+**Verfügbare Platzhalter:**
+• {user} - Username
+• {mention} - User-Mention
+• {server} - Servername
+• {count} - Mitgliederzahl
+""")
+
+    @commands.command(name="role")
     @commands.has_permissions(administrator=True)
     async def set_welcome_role(self, ctx, role: discord.Role):
         """Setzt die automatische Willkommensrolle"""
@@ -135,7 +209,7 @@ class WelcomeSystem(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    @welcome.command(name="verify")
+    @commands.command(name="verify")
     @commands.has_permissions(administrator=True)
     async def set_verification(self, ctx, channel: discord.TextChannel = None, temp_role: discord.Role = None, verified_role: discord.Role = None):
         """Richtet das Verifikationssystem ein"""
@@ -344,63 +418,68 @@ class WelcomeSystem(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        """Wird ausgeführt, wenn ein neues Mitglied dem Server beitritt"""
-        config = self.welcome_configs.get(member.guild.id, {})
-        
+        """Wird ausgeführt wenn ein neuer User dem Server beitritt"""
         try:
-            # Temporäre Rolle vergeben
-            if 'temp_role_id' in config and config['temp_role_id']:
-                temp_role = member.guild.get_role(config['temp_role_id'])
-                if temp_role and temp_role < member.guild.me.top_role:
+            async with aiosqlite.connect(DB_PATH) as db:
+                async with db.execute('''
+                    SELECT welcome_channel_id, temp_role_id, verified_role_id, welcome_message, enabled, rules_channel_id 
+                    FROM welcome_config 
+                    WHERE guild_id = ?
+                ''', (member.guild.id,)) as cursor:
+                    config = await cursor.fetchone()
+
+                if not config or not config[4]:  # enabled check
+                    return
+
+                welcome_channel_id, temp_role_id, verified_role_id, welcome_message, _, rules_channel_id = config
+
+                # Füge Unverified-Rolle hinzu
+                if temp_role_id:
                     try:
-                        await member.add_roles(temp_role)
+                        unverified_role = member.guild.get_role(temp_role_id)
+                        if unverified_role:
+                            await member.add_roles(unverified_role)
+                            print(f"✅ Unverified-Rolle zu {member.name} hinzugefügt")
+                        else:
+                            print(f"❌ Unverified-Rolle (ID: {temp_role_id}) nicht gefunden!")
                     except discord.Forbidden:
-                        print(f"Keine Berechtigung für Rollenvergabe an {member.name}")
+                        print(f"❌ Keine Berechtigung, die Unverified-Rolle zu {member.name} hinzuzufügen")
+                    except Exception as e:
+                        print(f"❌ Fehler beim Hinzufügen der Unverified-Rolle: {e}")
+                else:
+                    print(f"❌ Keine Unverified-Rolle konfiguriert für Server {member.guild.id}")
 
-            # Willkommensnachricht senden
-            if 'welcome_channel_id' in config and config['welcome_channel_id']:
-                channel = member.guild.get_channel(config['welcome_channel_id'])
-                verify_channel = None
-                
-                if channel:
-                    verification_text = ""
-                    if 'verification_channel_id' in config and config['verification_channel_id']:
-                        verify_channel = member.guild.get_channel(config['verification_channel_id'])
-                        if verify_channel:
-                            verification_text = f"\n\n**Wichtig:** Bitte verifiziere dich in {verify_channel.mention}, um Zugang zum Server zu erhalten!"
-
-                    base_message = config.get('welcome_message', "Willkommen auf unserem Server, {mention}!")\
-                        .replace("{user}", member.name)\
-                        .replace("{mention}", member.mention)\
-                        .replace("{server}", member.guild.name)\
-                        .replace("{count}", str(member.guild.member_count))
-                    
-                    message = base_message + verification_text
+                # Sende Willkommensnachricht
+                if welcome_channel_id:
+                    channel = member.guild.get_channel(welcome_channel_id)
+                    if channel:
+                        rules_channel = member.guild.get_channel(rules_channel_id) if rules_channel_id else None
                         
-                    embed = discord.Embed(
-                        title="👋 Willkommen!",
-                        description=message,
-                        color=discord.Color.blue()
-                    )
-                    embed.set_thumbnail(url=member.display_avatar.url)
-                    
-                    if verification_text and verify_channel:
-                        embed.add_field(
-                            name="📝 Nächste Schritte",
-                            value=f"1. Gehe zu {verify_channel.mention}\n"
-                                 f"2. Lies die Serverregeln\n"
-                                 f"3. Reagiere mit ✅ um Zugang zu erhalten",
-                            inline=False
+                        embed = discord.Embed(
+                            title=f"👋 Willkommen auf {member.guild.name}!",
+                            description=welcome_message or f"Willkommen {member.mention} auf unserem Server!",
+                            color=discord.Color.blue()
                         )
-                    
-                    await channel.send(embed=embed)
-
-                    # Sende Verifikationsanweisungen
-                    if verify_channel:
-                        await self.send_verification_instructions(member, verify_channel)
+                        
+                        instructions = []
+                        if rules_channel:
+                            instructions.append(f"1️⃣ Lies dir bitte die Regeln in {rules_channel.mention} durch")
+                            instructions.append("2️⃣ Akzeptiere die Regeln mit ✅ um Zugriff auf alle Kanäle zu erhalten")
+                        
+                        if instructions:
+                            embed.add_field(
+                                name="📝 Nächste Schritte:",
+                                value="\n".join(instructions),
+                                inline=False
+                            )
+                        
+                        embed.set_thumbnail(url=member.display_avatar.url)
+                        embed.set_footer(text=f"Du bist unser {len(member.guild.members)}. Mitglied!")
+                        
+                        await channel.send(embed=embed)
 
         except Exception as e:
-            print(f"Fehler im on_member_join Event: {str(e)}")
+            print(f"Fehler im on_member_join Event: {e}")
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
@@ -408,104 +487,118 @@ class WelcomeSystem(commands.Cog):
         if payload.user_id == self.bot.user.id:
             return
 
-        config = self.welcome_configs.get(payload.guild_id, {})
-        if not config:
-            return
+        try:
+            async with aiosqlite.connect(DB_PATH) as db:
+                # Hole Konfiguration
+                async with db.execute('''
+                    SELECT rules_channel_id, temp_role_id, verified_role_id 
+                    FROM welcome_config 
+                    WHERE guild_id = ?
+                ''', (payload.guild_id,)) as cursor:
+                    config = await cursor.fetchone()
 
-        # Prüfe ob es die Regelwerk-Nachricht ist
-        if (payload.message_id == config.get('rules_message_id') and 
-            payload.emoji.name == "✅"):
-            
-            guild = self.bot.get_guild(payload.guild_id)
-            if not guild:
-                return
+                if not config:
+                    return
 
-            member = guild.get_member(payload.user_id)
-            if not member:
-                return
+                rules_channel_id, temp_role_id, verified_role_id = config
 
-            # Rollen aktualisieren
-            temp_role = guild.get_role(config['temp_role_id'])
-            verified_role = guild.get_role(config['verified_role_id'])
+                # Prüfe ob es die richtige Nachricht im richtigen Kanal ist
+                if (payload.channel_id == rules_channel_id and 
+                    str(payload.emoji) == "✅"):
+                    
+                    guild = self.bot.get_guild(payload.guild_id)
+                    if not guild:
+                        return
 
-            try:
-                # Temporäre Rolle entfernen
-                if temp_role:
-                    await member.remove_roles(temp_role)
-                
-                # Verifizierte Rolle hinzufügen
-                if verified_role:
-                    await member.add_roles(verified_role)
+                    member = guild.get_member(payload.user_id)
+                    if not member:
+                        return
 
-                # DM an User
-                try:
-                    embed = discord.Embed(
-                        title="✅ Erfolgreich verifiziert!",
-                        description=f"Du hast nun Zugang zu allen Kanälen auf **{guild.name}**!",
-                        color=discord.Color.green()
-                    )
-                    await member.send(embed=embed)
-                except discord.Forbidden:
-                    pass
+                    # Hole die Rollen
+                    temp_role = guild.get_role(temp_role_id) if temp_role_id else None
+                    verified_role = guild.get_role(verified_role_id) if verified_role_id else None
 
-                # Log-Nachricht
-                if 'welcome_channel_id' in config:
-                    channel = guild.get_channel(config['welcome_channel_id'])
-                    if channel:
-                        embed = discord.Embed(
-                            title="✅ Neues verifiziertes Mitglied",
-                            description=f"{member.mention} hat sich erfolgreich verifiziert!",
-                            color=discord.Color.green()
-                        )
-                        await channel.send(embed=embed)
+                    try:
+                        # Entferne temporäre Rolle
+                        if temp_role and temp_role in member.roles:
+                            await member.remove_roles(temp_role)
+                            print(f"Temporäre Rolle von {member.name} entfernt")
 
-            except discord.Forbidden:
-                pass
+                        # Füge verifizierte Rolle hinzu
+                        if verified_role and verified_role not in member.roles:
+                            await member.add_roles(verified_role)
+                            print(f"Verifizierte Rolle zu {member.name} hinzugefügt")
+
+                        # Sende Bestätigung an User
+                        try:
+                            embed = discord.Embed(
+                                title="✅ Erfolgreich verifiziert!",
+                                description=f"Du hast nun Zugang zu allen Kanälen auf **{guild.name}**!",
+                                color=discord.Color.green()
+                            )
+                            await member.send(embed=embed)
+                        except discord.Forbidden:
+                            pass  # User hat DMs deaktiviert
+
+                    except discord.Forbidden:
+                        print(f"Keine Berechtigung für Rollenverwaltung bei {member.name}")
+                    except Exception as e:
+                        print(f"Fehler bei der Verifikation von {member.name}: {e}")
+
+        except Exception as e:
+            print(f"Fehler im on_raw_reaction_add Event: {e}")
 
     @welcome.command(name="rules")
     @commands.has_permissions(administrator=True)
-    async def update_rules(self, ctx, *, rules: str):
-        """Aktualisiert den Regeltext"""
-        config = self.welcome_configs.get(ctx.guild.id, {})
-        if not config.get('verification_channel_id'):
-            await ctx.send("❌ Bitte richte zuerst das Verifikationssystem ein!")
-            return
-
-        channel = ctx.guild.get_channel(config['verification_channel_id'])
-        if not channel:
-            await ctx.send("❌ Der Verifikationskanal wurde nicht gefunden!")
-            return
-
-        embed = discord.Embed(
-            title="📜 Serverregeln",
-            description=rules + "\n\n" + 
-                       "**Reagiere mit ✅ um den Regeln zuzustimmen**",
-            color=discord.Color.blue()
-        )
-
-        # Alte Nachricht löschen falls vorhanden
+    async def set_rules_channel(self, ctx, channel: discord.TextChannel):
+        """Setzt den Regelkanal"""
         try:
-            old_message = await channel.fetch_message(config.get('rules_message_id'))
-            await old_message.delete()
-        except:
-            pass
+            async with aiosqlite.connect(DB_PATH) as db:
+                await db.execute('''
+                    UPDATE welcome_config 
+                    SET rules_channel_id = ?
+                    WHERE guild_id = ?
+                ''', (channel.id, ctx.guild.id))
+                await db.commit()
 
-        # Neue Nachricht senden
-        rules_message = await channel.send(embed=embed)
-        await rules_message.add_reaction("✅")
+            await ctx.send(f"✅ Regelkanal wurde auf {channel.mention} gesetzt!")
 
-        # Konfiguration aktualisieren
+        except Exception as e:
+            print(f"Fehler beim Setzen des Regelkanals: {e}")
+            await ctx.send("❌ Es ist ein Fehler aufgetreten!")
+
+class RulesView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="Regeln akzeptieren", style=discord.ButtonStyle.green, custom_id="accept_rules")
+    async def accept_rules(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """Button zum Akzeptieren der Regeln"""
         async with aiosqlite.connect(DB_PATH) as db:
-            await db.execute('''
-                UPDATE welcome_config 
-                SET rules_message_id = ?
+            # Hole Rollen-IDs
+            async with db.execute('''
+                SELECT temp_role_id, verified_role_id 
+                FROM welcome_config 
                 WHERE guild_id = ?
-            ''', (rules_message.id, ctx.guild.id))
-            await db.commit()
+            ''', (interaction.guild_id,)) as cursor:
+                row = await cursor.fetchone()
+                if not row:
+                    return await interaction.response.send_message("❌ Willkommenssystem nicht eingerichtet!", ephemeral=True)
+                
+                temp_role_id, verified_role_id = row
 
-        self.welcome_configs[ctx.guild.id]['rules_message_id'] = rules_message.id
-        
-        await ctx.send("✅ Regeltext wurde aktualisiert!")
+        # Hole Rollen
+        temp_role = interaction.guild.get_role(temp_role_id)
+        verified_role = interaction.guild.get_role(verified_role_id)
+
+        if not all([temp_role, verified_role]):
+            return await interaction.response.send_message("❌ Rollen nicht gefunden!", ephemeral=True)
+
+        # Entferne temporäre Rolle, füge verifizierte hinzu
+        await interaction.user.remove_roles(temp_role)
+        await interaction.user.add_roles(verified_role)
+
+        await interaction.response.send_message("✅ Du hast die Regeln akzeptiert und bist nun verifiziert!", ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(WelcomeSystem(bot)) 

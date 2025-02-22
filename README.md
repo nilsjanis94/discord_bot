@@ -1,113 +1,208 @@
-# Discord Bot Dokumentation
+# Discord Bot
 
-## Moderationssystem
+Ein vielseitiger Discord Bot für Moderation, Community-Management und Server-Administration.
 
-### Timeout
-- **Befehl:** `!timeout @User/ID/Name [Minuten] [Grund]`
-- **Beispiel:** `!timeout @User 10 Spam im Chat`
-- **Berechtigung:** Kick Members
-- **Limits:** 
-  - Minimum: 1 Minute
-  - Maximum: 40320 Minuten (28 Tage)
+## Features
 
-### Kick
-- **Befehl:** `!kick @User/ID/Name [Grund]`
-- **Beispiel:** `!kick @User Regelverstoß`
-- **Berechtigung:** Kick Members
+### 👋 Willkommenssystem
 
-### Ban
-- **Befehl:** `!ban @User/ID/Name [Grund]`
-- **Beispiel:** `!ban @User Schwerer Regelverstoß`
-- **Berechtigung:** Ban Members
+#### Grundeinrichtung
+- **Setup:** `!welcome setup`
+  - Erstellt Rollen (Unverified/Verified)
+  - Aktiviert Regelakzeptanz
+  - Aktiviert Willkommenssystem
 
-### Verwarnungen
-- **User verwarnen:** `!warn @User [Grund]`
-  - Gibt einem User eine Verwarnung
-  - **Berechtigung:** Kick Members
+#### Konfiguration
+- **Willkommenskanal:** `!welcome channel #kanal`
+  - Legt den Kanal für Willkommensnachrichten fest
+  - Beispiel: `!welcome channel #willkommen`
 
-- **Verwarnungen anzeigen:** `!warnings @User`
-  - Zeigt alle Verwarnungen eines Users
-  - **Berechtigung:** Kick Members
+- **Regelkanal:** `!welcome rules #kanal`
+  - Legt den Kanal für Serverregeln fest
+  - Beispiel: `!welcome rules #regeln`
 
-- **Verwarnung löschen:** `!delwarn @User [Nummer]`
-  - Löscht eine bestimmte Verwarnung
-  - **Berechtigung:** Administrator
+#### Funktionsweise
+- Neue Mitglieder erhalten automatisch die @Unverified Rolle
+- Willkommensnachricht mit Instruktionen im Willkommenskanal
+- Nach Regelakzeptanz (✅):
+  - @Unverified Rolle wird entfernt
+  - @Verified Rolle wird hinzugefügt
+  - User erhält Bestätigungsnachricht
 
-### Timeout-Verwaltung
-- **Aktive Timeouts anzeigen:** `!activetimeouts`
-  - Zeigt alle derzeit aktiven Timeouts auf dem Server
-  - **Berechtigung:** Kick Members
+#### Berechtigungen
+- `Administrator` für Setup und Konfiguration
+- Bot benötigt:
+  - Rollen verwalten
+  - Nachrichten senden
+  - Reaktionen sehen
+  - DMs senden (optional)
 
-- **Timeout-Historie:** `!timeouts @User`
-  - Zeigt die letzten 10 Timeouts eines Users
-  - **Berechtigung:** Kick Members
+#### Platzhalter
+- `{user}` - Username
+- `{mention}` - User-Mention
+- `{server}` - Servername
+- `{count}` - Mitgliederzahl
 
-## Willkommenssystem
+### 📜 Regelsystem
 
-### Grundeinrichtung
-- **Verifikation einrichten:** `!welcome verify #kanal @temp-rolle @verifiziert-rolle`
-  - Richtet das Verifikationssystem ein
-  - Kanäle mit # erwähnen
-  - Rollen mit @ erwähnen
-  - Discord-Autovervollständigung nutzen
-  - **Berechtigung:** Administrator
+#### Grundbefehle
+- **Anzeigen:** `!rules`
+- **Hinzufügen:** `!rules add <nummer> <titel | inhalt>`
+- **Bearbeiten:** `!rules edit <nummer> <titel | inhalt>`
+- **Entfernen:** `!rules remove <nummer>`
+- **Kanal setzen:** `!rules channel #kanal`
+- **Berechtigung:** Administrator
 
-- **Willkommenskanal setzen:** `!welcome channel #kanal`
-  - Legt fest, wo Willkommensnachrichten erscheinen
-  - **Berechtigung:** Administrator
+#### Format
+- Titel optional (mit | getrennt)
+- Automatische Nummerierung
+- Formatierte Anzeige
+- Bearbeitungsverlauf
+- Zeitstempel
 
-- **Willkommensnachricht setzen:** `!welcome message <Nachricht>`
-  - Definiert die Nachricht für neue Mitglieder
-  - **Platzhalter:**
-    - `{user}` - Username
-    - `{mention}` - User Mention
-    - `{server}` - Servername
-    - `{count}` - Mitgliederzahl
-  - **Berechtigung:** Administrator
+#### Beispiele
+- Regel hinzufügen: `!rules add 1 Respekt | Behandle alle mit Respekt`
+- Regel bearbeiten: `!rules edit 1 Verhalten | Sei freundlich zu allen`
+- Regel entfernen: `!rules remove 1`
 
-### Konfiguration prüfen
-- **Aktuelle Einstellungen:** `!checkconfig`
-  - Zeigt alle aktuellen Einstellungen des Systems
-  - Überprüft Kanäle und Rollen
-  - **Berechtigung:** Administrator
+### 🛡️ Moderationssystem
 
-### Features
-- **Automatische Rollenvergabe**
-  - Temporäre Rolle für neue Mitglieder
-  - Verifizierte Rolle nach Regelbestätigung
+#### Verwarnungen
+- **Verwarnen:** `!warn @User <grund>`
+- **Anzeigen:** `!warnings @User`
+- **Löschen:** `!delwarn @User <nummer>`
+- **Alle löschen:** `!clearwarnings @User`
 
-- **Willkommensnachrichten**
-  - Konfigurierbare Nachricht im Willkommenskanal
-  - Automatische Erwähnung des Verifikationskanals
-  - Eingebettete Nachrichten mit Avatar
+#### Timeouts
+- **Timeout:** `!timeout @User <minuten> [grund]`
+- **Aufheben:** `!untimeout @User`
+- **Limits:** 1-40320 Minuten (28 Tage)
 
-- **Verifikationssystem**
-  - Regelwerk mit Reaktions-Verifikation
-  - Automatischer Rollentausch nach Verifikation
-  - Temporärer privater Kanal für User ohne DMs
+#### Kicks & Bans
+- **Kick:** `!kick @User [grund]`
+- **Ban:** `!ban @User [grund]`
+- **Unban:** `!unban <User-ID>`
 
-- **Benachrichtigungen**
-  - DM an neue Mitglieder (falls aktiviert)
-  - Fallback-System für deaktivierte DMs
-  - Detaillierte Anweisungen zur Verifikation
+#### Nachrichten
+- **Löschen:** `!clear <anzahl>`
+- **Limit:** 1-100 Nachrichten
 
-## Hinweise
-- DMs müssen vom User aktiviert sein für direkte Benachrichtigungen
-- Bei deaktivierten DMs wird ein temporärer Kanal erstellt
-- Der Bot benötigt entsprechende Berechtigungen
-- Rollen müssen unter der Bot-Rolle sein
-- Nutze die Discord-Autovervollständigung für Erwähnungen
+#### Modlogs
+- **Anzeigen:** `!modlogs @User`
+- **Kanal setzen:** `!setmodlog #kanal`
 
-## Fehlerbehebung
-- Prüfe die Konfiguration mit `!checkconfig`
-- Stelle sicher, dass der Bot die nötigen Berechtigungen hat
-- Rollen müssen unter der Bot-Rolle sein
-- Bei Problemen die Verifikation neu einrichten
+### 🤖 Auto-Moderation
 
-## Updates
-- Neue Befehle werden in diesem Dokument dokumentiert
-- Änderungen an bestehenden Befehlen werden hier aufgeführt
-- Letzte Aktualisierung: [Datum]
+#### Grundeinstellungen
+- **Aktivieren:** `!automod enable`
+- **Deaktivieren:** `!automod disable`
+- **Status:** `!automod status`
+- **Log-Kanal:** `!automod log #kanal`
+
+#### Filter
+- **Spam:** `!automod spam <an/aus> [schwelle] [interval]`
+- **Links:** `!automod links <an/aus>`
+- **CAPS:** `!automod caps <an/aus> [schwelle]`
+- **Emoji:** `!automod emoji <an/aus> [schwelle]`
+- **Flood:** `!automod flood <an/aus> [nachrichten] [sekunden]`
+
+#### Wort-Filter
+- **Hinzufügen:** `!automod addword <wort>`
+- **Entfernen:** `!automod delword <wort>`
+- **Liste:** `!automod words`
+
+#### Whitelist
+- **Rolle:** `!automod whitelist role @rolle`
+- **Kanal:** `!automod whitelist channel #kanal`
+
+## 📝 Logging-System
+
+### Mod-Logs
+- Alle Moderationsaktionen
+- Farbcodierte Embeds
+- Zeitstempel und Dauer
+- Grund und Moderator
+- Verwarnungszähler
+
+### Auto-Mod Logs
+- Automatische Aktionen
+- Regelverstoß-Details
+- Betroffene Nachrichten
+- Filter-Auslöser
+
+### Welcome-Logs
+- Neue Mitglieder
+- Regelakzeptanz
+- Rollenvergabe
+- Verifikationsstatus
+
+## ⚙️ Technische Details
+
+### Datenbank
+- SQLite für persistente Datenspeicherung
+- Separate Tabellen für:
+  - Moderationsaktionen
+  - Verwarnungen
+  - Auto-Mod Konfiguration
+  - Server-Einstellungen
+  - Wort-Filter
+  - Serverregeln
+  - Willkommenssystem
+
+### Berechtigungen
+- Administrator
+  - Systemkonfiguration
+  - Regelmanagement
+  - Auto-Mod Einstellungen
+- Moderator (Kick Members)
+  - Verwarnungen
+  - Timeouts
+  - Kicks
+- Ban Members
+  - Bans/Unbans
+
+### Fehlerbehandlung
+- Ausführliche Fehlermeldungen
+- Berechtigungsprüfungen
+- Parametervalidierung
+- Datenbank-Backup
+
+## 🔧 Installation & Setup
+
+1. Bot zum Server einladen
+2. Grundeinrichtung:
+   ```
+   !welcome setup
+   !welcome channel #willkommen
+   !welcome rules #regeln
+   !setmodlog #mod-logs
+   !automod enable
+   ```
+3. Regeln erstellen
+4. Auto-Mod anpassen
+
+## 📋 Voraussetzungen
+
+- Discord.py 2.0+
+- Python 3.8+
+- SQLite3
+- Erforderliche Bot-Berechtigungen:
+  - Nachrichten verwalten
+  - Mitglieder kicken
+  - Mitglieder bannen
+  - Timeout vergeben
+  - Nachrichten senden
+  - Embeds senden
+  - Rollen verwalten
+
+## 🔄 Updates
+- Version: 1.0.0
+- Letzte Aktualisierung: [DATUM]
+
+## 🤝 Support
+Bei Fragen oder Problemen:
+- GitHub Issues
+- Discord Support Server
 
 ## Wetter-System
 

@@ -17,9 +17,21 @@ Ein vielseitiger Discord Bot für Moderation, Community-Management und Server-Ad
   - Legt den Kanal für Willkommensnachrichten fest
   - Beispiel: `!welcome channel #willkommen`
 
+- **Willkommensnachricht:** `!welcome message <nachricht>`
+  - Legt die Nachricht fest, die neue Mitglieder begrüßt
+  - Unterstützt Platzhalter wie {user}, {mention}, {server}, {count}
+  - Beispiel: `!welcome message Willkommen {mention} auf {server}!`
+
 - **Regelkanal:** `!welcome rules #kanal`
   - Legt den Kanal für Serverregeln fest
   - Beispiel: `!welcome rules #regeln`
+
+- **Verifikation:** `!welcome verify #kanal @temp-rolle @verifiziert-rolle`
+  - Richtet das Verifikationssystem ein
+  - Beispiel: `!welcome verify #verify @rookie @member`
+
+- **Status prüfen:** `!checkconfig`
+  - Zeigt die aktuelle Konfiguration des Willkommenssystems
 
 #### Funktionsweise
 - Neue Mitglieder erhalten automatisch die @Unverified Rolle
@@ -77,6 +89,8 @@ Ein vielseitiger Discord Bot für Moderation, Community-Management und Server-Ad
 - **Timeout:** `!timeout @User <minuten> [grund]`
 - **Aufheben:** `!untimeout @User`
 - **Limits:** 1-40320 Minuten (28 Tage)
+- **Aktive anzeigen:** `!activetimeouts`
+- **User-Timeouts anzeigen:** `!timeouts @User`
 
 #### Kicks & Bans
 - **Kick:** `!kick @User [grund]`
@@ -90,6 +104,7 @@ Ein vielseitiger Discord Bot für Moderation, Community-Management und Server-Ad
 #### Modlogs
 - **Anzeigen:** `!modlogs @User`
 - **Kanal setzen:** `!setmodlog #kanal`
+- **Logs anzeigen:** `!viewlogs [limit]`
 
 ### 🤖 Auto-Moderation
 
@@ -101,19 +116,107 @@ Ein vielseitiger Discord Bot für Moderation, Community-Management und Server-Ad
 
 #### Filter
 - **Spam:** `!automod spam <an/aus> [schwelle] [interval]`
+  - Erkennt zu viele Nachrichten in kurzer Zeit
+  - Beispiel: `!automod spam an 5 3` (5 Nachrichten in 3 Sekunden)
+
 - **Links:** `!automod links <an/aus>`
+  - Filtert Nachrichten mit verbotenen Links
+  - Beispiel: `!automod links an`
+
 - **CAPS:** `!automod caps <an/aus> [schwelle]`
+  - Erkennt Nachrichten mit zu vielen Großbuchstaben
+  - Beispiel: `!automod caps an 70` (70% Großbuchstaben)
+
 - **Emoji:** `!automod emoji <an/aus> [schwelle]`
+  - Erkennt Nachrichten mit zu vielen Emojis
+  - Beispiel: `!automod emoji an 30` (30% Emojis)
+
 - **Flood:** `!automod flood <an/aus> [nachrichten] [sekunden]`
+  - Erkennt wiederholte identische Nachrichten
+  - Beispiel: `!automod flood an 5 5` (5 gleiche Nachrichten in 5 Sekunden)
 
 #### Wort-Filter
 - **Hinzufügen:** `!automod addword <wort>`
+  - Fügt ein Wort zum Filter hinzu
+  - Beispiel: `!automod addword schimpfwort`
+
 - **Entfernen:** `!automod delword <wort>`
+  - Entfernt ein Wort vom Filter
+  - Beispiel: `!automod delword schimpfwort`
+
 - **Liste:** `!automod words`
+  - Zeigt alle gefilterten Wörter an
+
+#### Link-Filter
+- **Hinzufügen:** `!automod addlink <link>`
+  - Fügt einen Link zum Filter hinzu
+  - Beispiel: `!automod addlink discord.gg`
+
+- **Entfernen:** `!automod dellink <link>`
+  - Entfernt einen Link vom Filter
+  - Beispiel: `!automod dellink discord.gg`
+
+- **Liste:** `!automod links`
+  - Zeigt alle gefilterten Links an
 
 #### Whitelist
-- **Rolle:** `!automod whitelist role @rolle`
-- **Kanal:** `!automod whitelist channel #kanal`
+- **Rolle hinzufügen:** `!automod whitelist role @rolle`
+  - Fügt eine Rolle zur Whitelist hinzu
+  - Beispiel: `!automod whitelist role @Moderator`
+
+- **Kanal hinzufügen:** `!automod whitelist channel #kanal`
+  - Fügt einen Kanal zur Whitelist hinzu
+  - Beispiel: `!automod whitelist channel #bot-befehle`
+
+- **Liste anzeigen:** `!automod whitelist list`
+  - Zeigt alle Whitelist-Einträge an
+
+- **Rolle entfernen:** `!automod whitelist removerole @rolle`
+  - Entfernt eine Rolle von der Whitelist
+  - Beispiel: `!automod whitelist removerole @Moderator`
+
+- **Kanal entfernen:** `!automod whitelist removechannel #kanal`
+  - Entfernt einen Kanal von der Whitelist
+  - Beispiel: `!automod whitelist removechannel #bot-befehle`
+
+### 🎭 Reaction Roles
+
+#### Grundbefehle
+- **Erstellen:** `!reactionrole create <emoji> @rolle <beschreibung>`
+  - Erstellt eine neue Reaction Role Nachricht
+  - Beispiel: `!reactionrole create 🎮 @Gamer Rolle für Gamer`
+
+- **Entfernen:** `!reactionrole remove <message_id>`
+  - Entfernt eine Reaction Role Nachricht
+  - Beispiel: `!reactionrole remove 123456789012345678`
+
+- **Auflisten:** `!reactionrole list`
+  - Listet alle aktiven Reaction Roles auf
+
+#### Funktionsweise
+- Bot erstellt eine Embed-Nachricht mit der Beschreibung
+- Bot fügt das angegebene Emoji als Reaktion hinzu
+- User können durch Reaktion die Rolle erhalten/verlieren
+- Alle Daten werden in der Datenbank gespeichert
+
+#### Berechtigungen
+- `Administrator` für Erstellung und Verwaltung
+- Bot benötigt:
+  - Rollen verwalten
+  - Nachrichten senden
+  - Reaktionen hinzufügen
+  - Reaktionen sehen
+
+### 🌤️ Wetter-System
+
+#### Wetter abfragen
+- **Aktuelles Wetter:** `!wetter <stadt>`
+  - Zeigt das aktuelle Wetter für die angegebene Stadt
+  - Beispiel: `!wetter Berlin`
+  - Zeigt:
+    - Temperatur
+    - Wetterzustand
+    - Windgeschwindigkeit
 
 ## 📝 Logging-System
 
@@ -148,12 +251,15 @@ Ein vielseitiger Discord Bot für Moderation, Community-Management und Server-Ad
   - Wort-Filter
   - Serverregeln
   - Willkommenssystem
+  - Reaction Roles
+  - Wetter-Einstellungen
 
 ### Berechtigungen
 - Administrator
   - Systemkonfiguration
   - Regelmanagement
   - Auto-Mod Einstellungen
+  - Reaction Roles
 - Moderator (Kick Members)
   - Verwarnungen
   - Timeouts
@@ -177,9 +283,11 @@ Ein vielseitiger Discord Bot für Moderation, Community-Management und Server-Ad
    !welcome rules #regeln
    !setmodlog #mod-logs
    !automod enable
+   !automod log #automod-logs
    ```
 3. Regeln erstellen
 4. Auto-Mod anpassen
+5. Reaction Roles einrichten
 
 ## 📋 Voraussetzungen
 
@@ -194,6 +302,7 @@ Ein vielseitiger Discord Bot für Moderation, Community-Management und Server-Ad
   - Nachrichten senden
   - Embeds senden
   - Rollen verwalten
+  - Reaktionen hinzufügen
 
 ## 🔄 Updates
 - Version: 1.0.0
@@ -204,84 +313,10 @@ Bei Fragen oder Problemen:
 - GitHub Issues
 - Discord Support Server
 
-## Wetter-System
-
-### Wetter abfragen
-- **Aktuelles Wetter:** `!wetter [Stadt]`
-  - Zeigt das aktuelle Wetter für die angegebene Stadt
-  - **Beispiel:** `!wetter Berlin`
-  - Zeigt:
-    - Temperatur
-    - Gefühlte Temperatur
-    - Luftfeuchtigkeit
-    - Windgeschwindigkeit
-    - Wetterbeschreibung
-    - Sonnenauf- und untergang
-
-- **5-Tage Vorhersage:** `!wettervorhersage [Stadt]`
-  - Zeigt die Wettervorhersage für die nächsten 5 Tage
-  - **Beispiel:** `!wettervorhersage Hamburg`
-
-### Wetter-Benachrichtigungen
-- **Wetter-Updates aktivieren:** `!wetter_updates [Stadt] [Kanal]`
-  - Sendet tägliche Wetterupdates in den angegebenen Kanal
-  - **Berechtigung:** Administrator
-  - **Beispiel:** `!wetter_updates Berlin #wetter`
-
-## Funktionsweise
-
-### Mod-Logs
-- Alle Moderationsaktionen werden automatisch protokolliert
-- Protokolliert werden:
-  - Betroffener User (Name, ID)
-  - Ausführender Moderator
-  - Art der Aktion
-  - Grund
-  - Zeitstempel
-  - Bei Timeouts: Dauer und Ablaufzeit
-
-### Benachrichtigungen
-- Betroffene User erhalten eine DM (falls aktiviert)
-- Kurze Bestätigung im Befehlskanal
-- Detaillierte Logs im Mod-Log Kanal
-
-### Datenbank
-- Alle Aktionen werden dauerhaft gespeichert
-- Historie kann jederzeit eingesehen werden
-- Separate Logs für verschiedene Aktionstypen
-
-### Wetter-API
-- Nutzt OpenWeatherMap API
-- Automatische Aktualisierung der Wetterdaten
-- Unterstützung für weltweite Städte
-- Temperaturen in Celsius
-
-## Moderationsprotokoll
-- **Mod-Logs einsehen:** `!modlogs @User`
-  - Zeigt alle Moderationsaktionen für einen User
-  - Inkl. Verwarnungen, Timeouts, Kicks und Bans
-  - **Berechtigung:** Kick Members
-
-### Konfiguration
-- **Mod-Log Kanal setzen:** `!setmodlog #Kanal`
-  - Legt fest, in welchem Kanal Moderationsaktionen protokolliert werden
-  - **Berechtigung:** Administrator
-  - **Beispiel:** `!setmodlog #mod-logs`
-
 ## Hinweise
 - DMs müssen vom User aktiviert sein, um Benachrichtigungen zu erhalten
 - Timeouts können nicht länger als 28 Tage sein (Discord-Limit)
 - Der Bot benötigt entsprechende Berechtigungen für alle Aktionen
 - Mod-Logs sollten in einem geschützten Kanal eingerichtet werden
-- Wetter-Updates benötigen einen gültigen API-Schlüssel
-
-## Fehlerbehebung
-- Bei fehlenden Berechtigungen wird eine Fehlermeldung angezeigt
-- DM-Fehler werden im Mod-Log protokolliert
-- Bei Problemen mit Timeouts wird der Grund angegeben
-- Ungültige Städtenamen werden mit einer Fehlermeldung quittiert
-
-## Updates
-- Neue Befehle werden in diesem Dokument dokumentiert
-- Änderungen an bestehenden Befehlen werden hier aufgeführt
-- Letzte Aktualisierung: [Datum] 
+- AutoMod-Einstellungen werden in der Datenbank gespeichert und bleiben nach Neustart erhalten
+- Reaction Roles funktionieren auch nach Neustart des Bots 

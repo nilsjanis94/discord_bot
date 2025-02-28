@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from config import DISCORD_TOKEN
+from utils.db import init_db
 
 # Bot-Konfiguration mit allen notwendigen Intents
 intents = discord.Intents.default()
@@ -18,7 +19,9 @@ async def load_extensions():
         await bot.load_extension("cogs.moderation_commands")
         await bot.load_extension("cogs.weather_commands")
         await bot.load_extension("cogs.welcome_system")
-        await bot.load_extension("cogs.rules")  # Stelle sicher, dass rules.py geladen wird
+        await bot.load_extension("cogs.rules")  
+        await bot.load_extension("cogs.reaction_roles")  
+        await bot.load_extension("cogs.automod_commands")  
         print("✅ Alle Extensions wurden geladen!")
     except Exception as e:
         print(f"❌ Fehler beim Laden der Extensions: {e}")
@@ -26,6 +29,9 @@ async def load_extensions():
     
 @bot.event
 async def on_ready():
+    # Datenbank initialisieren
+    await init_db()
+    # Extensions laden
     await load_extensions()
     print(f'Bot ist online als {bot.user.name} und Befehle sind geladen!')
 

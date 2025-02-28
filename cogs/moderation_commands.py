@@ -13,7 +13,7 @@ import re
 class ModerationCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.automod = AutoMod()
+        self.automod = AutoMod(bot)
         self.logger = ModLogger(bot)
         
     async def cog_load(self):
@@ -23,6 +23,8 @@ class ModerationCommands(commands.Cog):
             await init_db()
             # Dann lade die Mod-Channels
             await self.logger.load_mod_channels()
+            # Initialisiere AutoMod
+            await self.automod.setup(self.bot)
         except Exception as e:
             print(f"Fehler beim Initialisieren der Moderation: {e}")
 

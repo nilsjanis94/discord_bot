@@ -21,7 +21,8 @@ async def load_extensions():
         await bot.load_extension("cogs.welcome_system")
         await bot.load_extension("cogs.rules")  
         await bot.load_extension("cogs.reaction_roles")  
-        await bot.load_extension("cogs.automod_commands")  
+        await bot.load_extension("cogs.automod_commands")
+        await bot.load_extension("cogs.temp_channels")
         print("✅ Alle Extensions wurden geladen!")
     except Exception as e:
         print(f"❌ Fehler beim Laden der Extensions: {e}")

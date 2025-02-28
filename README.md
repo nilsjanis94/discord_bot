@@ -207,6 +207,61 @@ Ein vielseitiger Discord Bot für Moderation, Community-Management und Server-Ad
   - Reaktionen hinzufügen
   - Reaktionen sehen
 
+### 🔊 Temporäre Sprachkanäle
+
+#### Admin-Befehle
+- **Setup:** `!tempvoice setup [kanalname]`
+  - Richtet das System für temporäre Sprachkanäle ein
+  - Erstellt einen Erstellungskanal und eine Kategorie
+  - Beispiel: `!tempvoice setup "➕ Erstelle deinen Kanal"`
+
+- **Kategorie setzen:** `!tempvoice category <name>`
+  - Legt die Kategorie für temporäre Kanäle fest
+  - Beispiel: `!tempvoice category "Sprachkanäle"`
+
+- **Limit setzen:** `!tempvoice limit <anzahl>`
+  - Legt das Limit für Kanäle pro Benutzer fest (1-10)
+  - Beispiel: `!tempvoice limit 3`
+
+- **Standard-Privatsphäre:** `!tempvoice defaultprivacy <public/locked/hidden>`
+  - Legt die Standard-Privatsphäre für neue Kanäle fest
+  - Beispiel: `!tempvoice defaultprivacy locked`
+
+- **Kanäle auflisten:** `!tempvoice list`
+  - Zeigt alle aktiven temporären Sprachkanäle an
+
+#### Benutzer-Befehle
+- **Name ändern:** `!tv name <name>`
+  - Ändert den Namen des eigenen temporären Kanals
+  - Beispiel: `!tv name "Gaming mit Freunden"`
+
+- **Benutzerlimit:** `!tv userlimit <anzahl>`
+  - Setzt das Benutzerlimit für den eigenen Kanal (0-99)
+  - Beispiel: `!tv userlimit 5`
+
+- **Privatsphäre:** `!tv privacy <public/locked/hidden>`
+  - Ändert die Privatsphäre-Einstellung des Kanals
+  - `public`: Jeder kann sehen und beitreten
+  - `locked`: Jeder kann sehen, aber nur eingeladene Benutzer können beitreten
+  - `hidden`: Nur eingeladene Benutzer können den Kanal sehen und beitreten
+  - Beispiel: `!tv privacy locked`
+
+- **Benutzer kicken:** `!tv kick @user`
+  - Kickt einen Benutzer aus dem eigenen Kanal
+  - Beispiel: `!tv kick @Störenfried`
+
+- **Benutzer einladen:** `!tv invite @user`
+  - Lädt einen Benutzer in den eigenen Kanal ein
+  - Beispiel: `!tv invite @Freund`
+
+#### Funktionsweise
+- Benutzer treten dem Erstellungskanal bei
+- Ein neuer temporärer Sprachkanal wird automatisch erstellt
+- Der Benutzer wird in den neuen Kanal verschoben
+- Der Kanal wird automatisch gelöscht, wenn er leer ist
+- Der Ersteller hat volle Kontrolle über seinen Kanal
+- Privatsphäre-Einstellungen ermöglichen verschiedene Zugriffsebenen
+
 ### 🌤️ Wetter-System
 
 #### Wetter abfragen
@@ -253,6 +308,7 @@ Ein vielseitiger Discord Bot für Moderation, Community-Management und Server-Ad
   - Willkommenssystem
   - Reaction Roles
   - Wetter-Einstellungen
+  - Temporäre Sprachkanäle
 
 ### Berechtigungen
 - Administrator
@@ -260,6 +316,7 @@ Ein vielseitiger Discord Bot für Moderation, Community-Management und Server-Ad
   - Regelmanagement
   - Auto-Mod Einstellungen
   - Reaction Roles
+  - Temporäre Sprachkanäle Setup
 - Moderator (Kick Members)
   - Verwarnungen
   - Timeouts
@@ -284,6 +341,7 @@ Ein vielseitiger Discord Bot für Moderation, Community-Management und Server-Ad
    !setmodlog #mod-logs
    !automod enable
    !automod log #automod-logs
+   !tempvoice setup "➕ Erstelle deinen Kanal"
    ```
 3. Regeln erstellen
 4. Auto-Mod anpassen
@@ -303,6 +361,7 @@ Ein vielseitiger Discord Bot für Moderation, Community-Management und Server-Ad
   - Embeds senden
   - Rollen verwalten
   - Reaktionen hinzufügen
+  - Sprachkanäle erstellen und verwalten
 
 ## 🔄 Updates
 - Version: 1.0.0
@@ -319,4 +378,5 @@ Bei Fragen oder Problemen:
 - Der Bot benötigt entsprechende Berechtigungen für alle Aktionen
 - Mod-Logs sollten in einem geschützten Kanal eingerichtet werden
 - AutoMod-Einstellungen werden in der Datenbank gespeichert und bleiben nach Neustart erhalten
-- Reaction Roles funktionieren auch nach Neustart des Bots 
+- Reaction Roles funktionieren auch nach Neustart des Bots
+- Temporäre Sprachkanäle werden automatisch gelöscht, wenn sie leer sind 

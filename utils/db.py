@@ -190,6 +190,27 @@ async def init_db():
             )
         ''')
 
+        # Temp Voice Channels Tables
+        await db.execute('''
+        CREATE TABLE IF NOT EXISTS temp_voice_config (
+            guild_id INTEGER PRIMARY KEY,
+            creator_channel_id INTEGER,
+            category_id INTEGER,
+            user_limit INTEGER DEFAULT 1,
+            default_privacy TEXT DEFAULT 'public'
+        )
+        ''')
+        
+        await db.execute('''
+        CREATE TABLE IF NOT EXISTS temp_voice_channels (
+            channel_id INTEGER PRIMARY KEY,
+            guild_id INTEGER,
+            owner_id INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            privacy TEXT DEFAULT 'public'
+        )
+        ''')
+
         await db.commit()
         print("✅ Datenbank-Tabellen wurden initialisiert!")
 

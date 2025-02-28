@@ -9,6 +9,7 @@ from utils.automod import AutoMod
 from utils.mod_logger import ModLogger
 from discord.ext.commands import MemberNotFound, BadArgument
 import re
+from utils.permissions import is_admin
 
 class ModerationCommands(commands.Cog):
     def __init__(self, bot):
@@ -29,7 +30,7 @@ class ModerationCommands(commands.Cog):
             print(f"Fehler beim Initialisieren der Moderation: {e}")
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def setlogchannel(self, ctx, channel: discord.TextChannel = None):
         """Setzt den Logging-Kanal"""
         channel = channel or ctx.channel
@@ -38,7 +39,7 @@ class ModerationCommands(commands.Cog):
         await ctx.send(f"Logging-Kanal wurde auf {channel.mention} gesetzt!")
 
     @commands.command()
-    @commands.has_permissions(kick_members=True)
+    @is_admin()
     async def warn(self, ctx, member: discord.Member, *, reason: str = None):
         """Verwarnt einen User"""
         if not reason:
@@ -109,7 +110,7 @@ class ModerationCommands(commands.Cog):
             await ctx.send("❌ Es ist ein Fehler aufgetreten!")
 
     @commands.command()
-    @commands.has_permissions(kick_members=True)
+    @is_admin()
     async def warnings(self, ctx, user: discord.Member):
         """Zeigt alle Verwarnungen eines Users"""
         async with aiosqlite.connect(DB_PATH) as db:
@@ -142,7 +143,7 @@ class ModerationCommands(commands.Cog):
             await ctx.send(embed=embed)
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def delwarn(self, ctx, user: discord.Member, warn_id: int):
         """Löscht eine bestimmte Verwarnung eines Users"""
         async with aiosqlite.connect(DB_PATH) as db:
@@ -180,7 +181,7 @@ class ModerationCommands(commands.Cog):
             )
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def clearwarnings(self, ctx, member: discord.Member):
         """Löscht alle Verwarnungen eines Mitglieds"""
         async with aiosqlite.connect(DB_PATH) as db:
@@ -283,7 +284,7 @@ class ModerationCommands(commands.Cog):
             await ctx.send(f"❌ Fehler beim Senden der Benachrichtigungen: {str(e)}")
 
     @commands.command()
-    @commands.has_permissions(kick_members=True)
+    @is_admin()
     async def timeout(self, ctx, user_input: str = None, *args):
         """Timeout für ein Mitglied"""
         if not user_input:
@@ -396,7 +397,7 @@ class ModerationCommands(commands.Cog):
             await ctx.send(f"❌ Es ist ein unerwarteter Fehler aufgetreten: {str(error)}")
 
     @commands.command()
-    @commands.has_permissions(manage_messages=True)
+    @is_admin()
     async def clear(self, ctx, amount: int):
         """Löscht eine bestimmte Anzahl von Nachrichten"""
         if amount < 1 or amount > 100:
@@ -409,7 +410,7 @@ class ModerationCommands(commands.Cog):
         await msg.delete()
 
     @commands.command()
-    @commands.has_permissions(kick_members=True)
+    @is_admin()
     async def kick(self, ctx, member: discord.Member, *, reason: str = None):
         """Kickt einen User vom Server"""
         if not reason:
@@ -484,7 +485,7 @@ class ModerationCommands(commands.Cog):
             await ctx.send("❌ Es ist ein Fehler aufgetreten!")
 
     @commands.command()
-    @commands.has_permissions(ban_members=True)
+    @is_admin()
     async def ban(self, ctx, user_input: str = None, *, reason=None):
         """Bannt ein Mitglied vom Server"""
         if not user_input:
@@ -560,7 +561,7 @@ class ModerationCommands(commands.Cog):
             await ctx.send(f"❌ Es gab einen Fehler beim Bannen: {str(e)}")
 
     @commands.command()
-    @commands.has_permissions(kick_members=True)
+    @is_admin()
     async def modlogs(self, ctx, user: discord.Member):
         """Zeigt alle Moderationsaktionen für einen User"""
         async with aiosqlite.connect(DB_PATH) as db:
@@ -631,7 +632,7 @@ class ModerationCommands(commands.Cog):
             await ctx.send(embed=embed)
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def addfilter(self, ctx, filter_type: str, *, word: str):
         """Fügt ein Wort oder einen Link zum Filter hinzu"""
         if filter_type not in ['word', 'link']:
@@ -653,7 +654,7 @@ class ModerationCommands(commands.Cog):
         await ctx.send(f"{filter_type.capitalize()} wurde zum Filter hinzugefügt!")
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def viewlogs(self, ctx, limit: int = 10):
         """Zeigt die letzten Moderations-Logs"""
         if ctx.guild.id not in self.logger.log_channels:
@@ -678,7 +679,7 @@ class ModerationCommands(commands.Cog):
             await ctx.send(embed=embed)
 
     @commands.command()
-    @commands.has_permissions(kick_members=True)
+    @is_admin()
     async def activetimeouts(self, ctx):
         """Zeigt alle aktiven Timeouts auf dem Server"""
         async with aiosqlite.connect(DB_PATH) as db:
@@ -714,7 +715,7 @@ class ModerationCommands(commands.Cog):
             await ctx.send(embed=embed)
 
     @commands.command()
-    @commands.has_permissions(kick_members=True)
+    @is_admin()
     async def timeouts(self, ctx, user: discord.Member):
         """Zeigt die Timeout-Historie eines Users"""
         async with aiosqlite.connect(DB_PATH) as db:
@@ -749,7 +750,7 @@ class ModerationCommands(commands.Cog):
             await ctx.send(embed=embed)
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def setmodlog(self, ctx, channel: discord.TextChannel):
         """Setzt den Kanal für Moderations-Logs"""
         try:

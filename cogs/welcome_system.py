@@ -3,6 +3,7 @@ from discord.ext import commands
 import aiosqlite
 from utils.db import DB_PATH
 import asyncio
+from utils.permissions import is_admin
 
 class WelcomeSystem(commands.Cog):
     def __init__(self, bot):
@@ -62,7 +63,7 @@ class WelcomeSystem(commands.Cog):
         return embed, view
 
     @commands.group(invoke_without_command=True)
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def welcome(self, ctx):
         """Willkommenssystem Befehle"""
         if ctx.invoked_subcommand is None:
@@ -76,7 +77,7 @@ class WelcomeSystem(commands.Cog):
             """)
 
     @welcome.command(name="setup")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def setup_welcome(self, ctx):
         """Richtet das Willkommenssystem ein"""
         try:
@@ -129,7 +130,7 @@ class WelcomeSystem(commands.Cog):
             await ctx.send("❌ Es ist ein Fehler aufgetreten!")
 
     @welcome.command(name="channel")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def set_welcome_channel(self, ctx, channel: discord.TextChannel):
         """Setzt den Willkommenskanal"""
         try:
@@ -155,7 +156,7 @@ class WelcomeSystem(commands.Cog):
             await ctx.send("❌ Kanal nicht gefunden! Bitte erwähne einen gültigen Kanal.")
 
     @welcome.command(name="message")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def set_welcome_message(self, ctx, *, message: str):
         """Setzt die Willkommensnachricht"""
         async with aiosqlite.connect(DB_PATH) as db:
@@ -185,7 +186,7 @@ class WelcomeSystem(commands.Cog):
 """)
 
     @commands.command(name="role")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def set_welcome_role(self, ctx, role: discord.Role):
         """Setzt die automatische Willkommensrolle"""
         if role >= ctx.guild.me.top_role:
@@ -210,7 +211,7 @@ class WelcomeSystem(commands.Cog):
         await ctx.send(embed=embed)
 
     @welcome.command(name="verify")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def set_verification(self, ctx, channel: discord.TextChannel, temp_role: discord.Role, verified_role: discord.Role):
         """Setzt den Verifikationskanal und die Rollen für das Verifikationssystem"""
         guild_id = ctx.guild.id
@@ -258,7 +259,7 @@ class WelcomeSystem(commands.Cog):
         await ctx.send(f"✅ Verifikationssystem wurde eingerichtet!\nVerifikationskanal: {channel.mention}\nTemporäre Rolle: {temp_role.mention}\nVerifizierte Rolle: {verified_role.mention}")
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def checkconfig(self, ctx):
         """Zeigt die aktuelle Konfiguration des Willkommenssystems"""
         # Aktualisiere zuerst die Konfiguration aus der Datenbank
@@ -538,7 +539,7 @@ class WelcomeSystem(commands.Cog):
             print(f"❌ Fehler bei der Verarbeitung der Reaktion: {e}")
 
     @welcome.command(name="rules")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def set_rules_channel(self, ctx, channel: discord.TextChannel):
         """Setzt den Regelkanal"""
         try:

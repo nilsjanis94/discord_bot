@@ -8,6 +8,7 @@ import os
 # Füge das Hauptverzeichnis zum Pfad hinzu, damit wir utils importieren können
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from utils.db import Database
+from utils.permissions import is_admin  # Importiere die neue Berechtigungsprüfung
 
 class ReactionRoles(commands.Cog):
     def __init__(self, bot):
@@ -23,7 +24,7 @@ class ReactionRoles(commands.Cog):
         return {row[0]: row[1] for row in results}
 
     @commands.group(name="reactionrole", aliases=["rr"])
-    @commands.has_permissions(administrator=True)
+    @is_admin()  # Ersetze @commands.has_permissions(administrator=True)
     async def reaction_role(self, ctx):
         """Hauptbefehl für Reaction Roles"""
         if ctx.invoked_subcommand is None:

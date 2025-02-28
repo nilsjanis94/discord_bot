@@ -4,6 +4,7 @@ from utils.automod import AutoMod
 from typing import Optional, Union
 import re
 import asyncio
+from utils.permissions import is_admin
 
 class AutoModCommands(commands.Cog):
     def __init__(self, bot):
@@ -41,7 +42,7 @@ class AutoModCommands(commands.Cog):
             print(f"❌ Fehler bei der AutoMod-Verarbeitung: {e}")
     
     @commands.group(name="automod", invoke_without_command=True)
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def automod(self, ctx):
         """Hauptbefehl für AutoMod-Konfiguration"""
         embed = discord.Embed(
@@ -106,7 +107,7 @@ class AutoModCommands(commands.Cog):
         await ctx.send(embed=embed)
     
     @automod.command(name="enable")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def automod_enable(self, ctx):
         """Aktiviert AutoMod für diesen Server"""
         await self.automod.enable(ctx.guild.id)
@@ -128,7 +129,7 @@ class AutoModCommands(commands.Cog):
         await ctx.send(embed=embed)
     
     @automod.command(name="disable")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def automod_disable(self, ctx):
         """Deaktiviert AutoMod für diesen Server"""
         await self.automod.disable(ctx.guild.id)
@@ -142,7 +143,7 @@ class AutoModCommands(commands.Cog):
         await ctx.send(embed=embed)
     
     @automod.command(name="status")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def automod_status(self, ctx):
         """Zeigt den aktuellen Status von AutoMod"""
         status = await self.automod.get_status(ctx.guild.id)
@@ -222,7 +223,7 @@ class AutoModCommands(commands.Cog):
         await ctx.send(embed=embed)
     
     @automod.command(name="log")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def automod_log(self, ctx, channel: discord.TextChannel):
         """Setzt den Log-Kanal für AutoMod"""
         await self.automod.set_log_channel(ctx.guild.id, channel.id)
@@ -236,7 +237,7 @@ class AutoModCommands(commands.Cog):
         await ctx.send(embed=embed)
     
     @automod.command(name="spam")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def automod_spam(self, ctx, status: str, messages: Optional[int] = None, interval: Optional[int] = None):
         """Konfiguriert den Spam-Filter"""
         if status.lower() not in ["an", "aus", "on", "off"]:
@@ -275,7 +276,7 @@ class AutoModCommands(commands.Cog):
             await ctx.send(embed=embed)
     
     @automod.command(name="caps")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def automod_caps(self, ctx, status: str, threshold: Optional[int] = None):
         """Konfiguriert den CAPS-Filter"""
         if status.lower() not in ["an", "aus", "on", "off"]:
@@ -317,7 +318,7 @@ class AutoModCommands(commands.Cog):
             await ctx.send(embed=embed)
     
     @automod.command(name="emoji")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def automod_emoji(self, ctx, status: str, threshold: Optional[int] = None):
         """Konfiguriert den Emoji-Filter"""
         if status.lower() not in ["an", "aus", "on", "off"]:
@@ -359,7 +360,7 @@ class AutoModCommands(commands.Cog):
             await ctx.send(embed=embed)
     
     @automod.command(name="flood")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def automod_flood(self, ctx, status: str, messages: Optional[int] = None, interval: Optional[int] = None):
         """Konfiguriert den Flood-Filter"""
         if status.lower() not in ["an", "aus", "on", "off"]:
@@ -398,7 +399,7 @@ class AutoModCommands(commands.Cog):
             await ctx.send(embed=embed)
     
     @automod.command(name="addword")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def automod_addword(self, ctx, *, word: str):
         """Fügt ein Wort zum Filter hinzu"""
         # Entferne Anführungszeichen, falls vorhanden
@@ -419,7 +420,7 @@ class AutoModCommands(commands.Cog):
         await ctx.send(embed=embed)
     
     @automod.command(name="delword")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def automod_delword(self, ctx, *, word: str):
         """Entfernt ein Wort vom Filter"""
         # Entferne Anführungszeichen, falls vorhanden
@@ -440,7 +441,7 @@ class AutoModCommands(commands.Cog):
         await ctx.send(embed=embed)
     
     @automod.command(name="words")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def automod_words(self, ctx):
         """Zeigt alle gefilterten Wörter"""
         guild_id = ctx.guild.id
@@ -481,7 +482,7 @@ class AutoModCommands(commands.Cog):
         # TODO: Implementiere Seitennavigation mit Reaktionen, falls gewünscht
     
     @automod.command(name="addlink")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def automod_addlink(self, ctx, *, link: str):
         """Fügt einen Link zum Filter hinzu"""
         # Entferne Anführungszeichen und Leerzeichen, falls vorhanden
@@ -505,7 +506,7 @@ class AutoModCommands(commands.Cog):
         await ctx.send(embed=embed)
     
     @automod.command(name="dellink")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def automod_dellink(self, ctx, *, link: str):
         """Entfernt einen Link vom Filter"""
         # Entferne Anführungszeichen und Leerzeichen, falls vorhanden
@@ -529,7 +530,7 @@ class AutoModCommands(commands.Cog):
         await ctx.send(embed=embed)
     
     @automod.command(name="links")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def automod_links(self, ctx):
         """Zeigt alle gefilterten Links"""
         guild_id = ctx.guild.id
@@ -568,13 +569,13 @@ class AutoModCommands(commands.Cog):
             await ctx.send(embed=embeds[0])
     
     @automod.group(name="whitelist", invoke_without_command=True)
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def automod_whitelist(self, ctx):
         """Verwaltet die Whitelist für AutoMod"""
         await ctx.send("❌ Bitte gib einen Unterbefehl an: `role`, `channel` oder `list`")
     
     @automod_whitelist.command(name="role")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def automod_whitelist_role(self, ctx, role: discord.Role):
         """Fügt eine Rolle zur Whitelist hinzu"""
         await self.automod.add_whitelist_role(ctx.guild.id, role.id)
@@ -588,7 +589,7 @@ class AutoModCommands(commands.Cog):
         await ctx.send(embed=embed)
     
     @automod_whitelist.command(name="channel")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def automod_whitelist_channel(self, ctx, channel: discord.TextChannel):
         """Fügt einen Kanal zur Whitelist hinzu"""
         await self.automod.add_whitelist_channel(ctx.guild.id, channel.id)
@@ -602,7 +603,7 @@ class AutoModCommands(commands.Cog):
         await ctx.send(embed=embed)
     
     @automod_whitelist.command(name="list")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def automod_whitelist_list(self, ctx):
         """Zeigt alle Whitelist-Einträge"""
         guild_id = ctx.guild.id
@@ -640,7 +641,7 @@ class AutoModCommands(commands.Cog):
         await ctx.send(embed=embed)
     
     @automod_whitelist.command(name="removerole")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def automod_whitelist_removerole(self, ctx, role: discord.Role):
         """Entfernt eine Rolle von der Whitelist"""
         await self.automod.remove_whitelist_role(ctx.guild.id, role.id)
@@ -654,7 +655,7 @@ class AutoModCommands(commands.Cog):
         await ctx.send(embed=embed)
     
     @automod_whitelist.command(name="removechannel")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def automod_whitelist_removechannel(self, ctx, channel: discord.TextChannel):
         """Entfernt einen Kanal von der Whitelist"""
         await self.automod.remove_whitelist_channel(ctx.guild.id, channel.id)

@@ -3,6 +3,7 @@ from discord.ext import commands
 import aiosqlite
 from utils.db import DB_PATH
 import datetime
+from utils.permissions import is_admin
 
 class Rules(commands.Cog):
     def __init__(self, bot):
@@ -50,7 +51,7 @@ Nutze folgende Befehle:
         await ctx.send(embed=embed)
 
     @rules.command(name="add")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def add_rule(self, ctx, number: int, *, content: str):
         """Fügt eine neue Regel hinzu"""
         title = None
@@ -70,7 +71,7 @@ Nutze folgende Befehle:
         await ctx.send(f"✅ Regel {number} wurde hinzugefügt!")
 
     @rules.command(name="remove")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def remove_rule(self, ctx, number: int):
         """Entfernt eine Regel"""
         async with aiosqlite.connect(DB_PATH) as db:
@@ -83,7 +84,7 @@ Nutze folgende Befehle:
         await ctx.send(f"✅ Regel {number} wurde entfernt!")
 
     @rules.command(name="edit")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def edit_rule(self, ctx, number: int, *, content: str):
         """Bearbeitet eine bestehende Regel"""
         title = None
@@ -103,7 +104,7 @@ Nutze folgende Befehle:
         await ctx.send(f"✅ Regel {number} wurde aktualisiert!")
 
     @rules.command(name="channel")
-    @commands.has_permissions(administrator=True)
+    @is_admin()
     async def set_rules_channel(self, ctx, channel: discord.TextChannel = None):
         """Sendet die Regeln in einen bestimmten Kanal"""
         channel = channel or ctx.channel

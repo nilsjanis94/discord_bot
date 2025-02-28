@@ -26,6 +26,18 @@ async def load_extensions():
     except Exception as e:
         print(f"❌ Fehler beim Laden der Extensions: {e}")
 
+# Globaler Error Handler für fehlende Berechtigungen
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        # Dieser Fehler wird bereits in der is_admin Funktion behandelt
+        pass
+    elif isinstance(error, commands.CommandNotFound):
+        # Ignoriere nicht existierende Befehle
+        pass
+    else:
+        # Andere Fehler normal ausgeben
+        print(f"Fehler bei Ausführung eines Befehls: {error}")
     
 @bot.event
 async def on_ready():

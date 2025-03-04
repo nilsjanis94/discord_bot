@@ -262,6 +262,66 @@ Ein vielseitiger Discord Bot für Moderation, Community-Management und Server-Ad
 - Der Ersteller hat volle Kontrolle über seinen Kanal
 - Privatsphäre-Einstellungen ermöglichen verschiedene Zugriffsebenen
 
+### 📅 Eventplaner
+
+#### Admin-Befehle
+- **Event erstellen:** `!event create <titel> <datum> <zeit> <beschreibung>`
+  - Erstellt ein neues Event mit Titel, Datum und Zeit
+  - Beispiel: `!event create "Spieleabend" 2023-12-24 19:00 Gemeinsamer Spieleabend auf dem Server`
+  - Erstellt automatisch einen Eintrag im Discord-Eventplaner (wenn verfügbar)
+
+- **Event bearbeiten:** `!event edit <event_id> <parameter> <neuer_wert>`
+  - Bearbeitet verschiedene Parameter eines bestehenden Events
+  - Parameter: title, description, date, time, location, max
+  - Beispiel: `!event edit 1 title Neuer Spieleabend`
+  - Beispiel: `!event edit 1 date 2023-12-25`
+  - Beispiel: `!event edit 1 max 10`
+
+- **Event löschen:** `!event delete <event_id>`
+  - Löscht ein bestehendes Event
+  - Beispiel: `!event delete 1`
+
+#### Benutzer-Befehle
+- **Events anzeigen:** `!event list`
+  - Listet alle kommenden Events auf
+
+- **Event-Details:** `!event show <event_id>`
+  - Zeigt detaillierte Informationen zu einem Event
+  - Beispiel: `!event show 1`
+
+- **Teilnahme zusagen:** `!event join <event_id>`
+  - Sagt für ein Event zu
+  - Beispiel: `!event join 1`
+
+- **Teilnahme absagen:** `!event leave <event_id>`
+  - Sagt für ein Event ab
+  - Beispiel: `!event leave 1`
+
+- **Teilnahme unsicher:** `!event maybe <event_id>`
+  - Markiert die Teilnahme als unsicher
+  - Beispiel: `!event maybe 1`
+
+- **Teilnehmer anzeigen:** `!event participants <event_id>` oder `!event teilnehmer <event_id>`
+  - Zeigt alle Teilnehmer eines Events an, sortiert nach Teilnahmestatus
+  - Beispiel: `!event participants 1`
+
+#### Funktionsweise
+- Admin erstellt Events mit Titel, Datum, Zeit und Beschreibung
+- Events werden als Embed-Nachrichten angezeigt
+- Benutzer können mit Reaktionen (✅/❌/❓) oder Befehlen teilnehmen
+- Automatische Erinnerungen 30 Minuten vor Eventbeginn
+- Events zeigen Teilnehmerlisten mit Zusagen, Absagen und Unsicheren an
+- Detaillierte Zeitanzeige mit Discord-Timestamp-Formatierung
+- Integration mit Discord-Eventplaner (wenn die API-Version es unterstützt)
+
+#### Eigenschaften
+- Maximale Teilnehmerzahl konfigurierbar
+- Ortsangabe möglich
+- Automatische Sortierung nach Datum
+- Reaktionsbasierte Teilnahme
+- Einfache Verwaltung bestehender Events
+- Übersichtliche Teilnehmeranzeige
+
 ### 🌤️ Wetter-System
 
 #### Wetter abfragen
@@ -309,6 +369,7 @@ Ein vielseitiger Discord Bot für Moderation, Community-Management und Server-Ad
   - Reaction Roles
   - Wetter-Einstellungen
   - Temporäre Sprachkanäle
+  - Eventplaner und Teilnehmer
 
 ### Berechtigungen
 - Administrator
@@ -317,10 +378,12 @@ Ein vielseitiger Discord Bot für Moderation, Community-Management und Server-Ad
   - Auto-Mod Einstellungen
   - Reaction Roles
   - Temporäre Sprachkanäle Setup
+  - Events erstellen und verwalten
 - Moderator (Kick Members)
   - Verwarnungen
   - Timeouts
   - Kicks
+  - Events erstellen und verwalten
 - Ban Members
   - Bans/Unbans
 
@@ -346,12 +409,14 @@ Ein vielseitiger Discord Bot für Moderation, Community-Management und Server-Ad
 3. Regeln erstellen
 4. Auto-Mod anpassen
 5. Reaction Roles einrichten
+6. Events planen
 
 ## 📋 Voraussetzungen
 
 - Discord.py 2.0+
 - Python 3.8+
 - SQLite3
+- pytz (für Zeitzonen im Eventplaner)
 - Erforderliche Bot-Berechtigungen:
   - Nachrichten verwalten
   - Mitglieder kicken
@@ -362,9 +427,10 @@ Ein vielseitiger Discord Bot für Moderation, Community-Management und Server-Ad
   - Rollen verwalten
   - Reaktionen hinzufügen
   - Sprachkanäle erstellen und verwalten
+  - Events verwalten (für Discord-Eventplaner)
 
 ## 🔄 Updates
-- Version: 1.0.0
+- Version: 1.1.0
 - Letzte Aktualisierung: [DATUM]
 
 ## 🤝 Support
@@ -379,4 +445,6 @@ Bei Fragen oder Problemen:
 - Mod-Logs sollten in einem geschützten Kanal eingerichtet werden
 - AutoMod-Einstellungen werden in der Datenbank gespeichert und bleiben nach Neustart erhalten
 - Reaction Roles funktionieren auch nach Neustart des Bots
-- Temporäre Sprachkanäle werden automatisch gelöscht, wenn sie leer sind 
+- Temporäre Sprachkanäle werden automatisch gelöscht, wenn sie leer sind
+- Eventplaner sendet automatisch Erinnerungen 30 Minuten vor Eventbeginn
+- Für die vollständige Integration mit dem Discord-Eventplaner benötigt der Bot die "Events verwalten" Berechtigung 

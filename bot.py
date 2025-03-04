@@ -10,6 +10,7 @@ intents.members = True         # Für Mitglieder-bezogene Aktionen
 intents.guilds = True         # Für Server-bezogene Aktionen
 intents.bans = True           # Für Ban-bezogene Aktionen
 intents.reactions = True      # Für Regelakzeptanz
+intents.guild_scheduled_events = True  # Korrekter Name für den Intent
 
 bot = commands.Bot(command_prefix='!', intents=intents)
 
@@ -23,6 +24,7 @@ async def load_extensions():
         await bot.load_extension("cogs.reaction_roles")  
         await bot.load_extension("cogs.automod_commands")
         await bot.load_extension("cogs.temp_channels")
+        await bot.load_extension("cogs.event_planner")
         print("✅ Alle Extensions wurden geladen!")
     except Exception as e:
         print(f"❌ Fehler beim Laden der Extensions: {e}")

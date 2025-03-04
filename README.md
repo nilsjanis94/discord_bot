@@ -333,6 +333,70 @@ Ein vielseitiger Discord Bot für Moderation, Community-Management und Server-Ad
     - Wetterzustand
     - Windgeschwindigkeit
 
+### 🎫 Ticket-System
+
+#### Admin-Befehle
+- **Setup:** `!ticket setup`
+  - Richtet das Ticket-System mit Support-Rolle und Kategorien ein
+  - Erstellt automatisch ein Ticket-Panel
+
+- **Kategorie festlegen:** `!ticket category #kategorie`
+  - Legt die Kategorie für Tickets fest
+
+- **Support-Rolle festlegen:** `!ticket role @rolle`
+  - Legt die Rolle für Support-Mitarbeiter fest
+
+- **Log-Kanal festlegen:** `!ticket log #kanal`
+  - Legt den Kanal für Ticket-Logs fest
+
+- **Archiv-Kategorie einrichten:** `!ticket archive`
+  - Richtet die Kategorie für archivierte Tickets ein
+
+- **Willkommensnachricht ändern:** `!ticket message <nachricht>`
+  - Ändert die Nachricht, die beim Öffnen eines Tickets angezeigt wird
+
+- **Ticket-Panel erstellen:** `!ticket panel #kanal`
+  - Erstellt ein Panel mit Button zum Öffnen von Tickets
+
+- **Statistiken anzeigen:** `!ticket stats`
+  - Zeigt Statistiken zum Ticket-System an
+
+- **Tickets auflisten:** `!ticket list [open/closed/all]`
+  - Listet alle Tickets nach Status auf
+
+#### Nutzer-Befehle
+- **Ticket erstellen:** `!ticket create [titel]`
+  - Erstellt ein neues Support-Ticket
+  - Alternativ über das Ticket-Panel mit Button
+
+- **Ticket schließen:** `!ticket close [grund]`
+  - Schließt ein aktuelles Ticket
+  - Auch über Button im Ticket möglich
+
+- **Nutzer hinzufügen:** `!ticket add @nutzer`
+  - Fügt einen Nutzer zum Ticket hinzu
+
+- **Nutzer entfernen:** `!ticket remove @nutzer`
+  - Entfernt einen Nutzer aus dem Ticket
+
+- **Transcript erstellen:** `!ticket transcript`
+  - Erstellt eine Textdatei mit allen Nachrichten im Ticket
+
+#### Funktionsweise
+- Nutzer können über Befehle oder Button Tickets erstellen
+- Private Ticket-Kanäle nur für den Ersteller und Support-Team sichtbar
+- Fortschrittlicher Ticket-Lebenszyklus:
+  1. Erstellen → 2. Bearbeiten → 3. Schließen → 4. Archivieren/Löschen
+- Automatische Protokollierung aller Aktionen
+- Archivierung ermöglicht nachträgliches Einsehen geschlossener Tickets
+- Transcript-Funktion zur vollständigen Dokumentation
+- Umfassende Statistiken zur Ticket-Nutzung
+
+#### Berechtigungen
+- Nutzer: Eigene Tickets verwalten
+- Support-Team: Alle Tickets bearbeiten, schließen und archivieren
+- Administratoren: System-Konfiguration
+
 ## 📝 Logging-System
 
 ### Mod-Logs
@@ -395,21 +459,84 @@ Ein vielseitiger Discord Bot für Moderation, Community-Management und Server-Ad
 
 ## 🔧 Installation & Setup
 
-1. Bot zum Server einladen
-2. Grundeinrichtung:
+1. **Bot zum Server einladen**
+   - Stelle sicher, dass der Bot alle erforderlichen Berechtigungen hat
+
+2. **Grundeinrichtung der Hauptfunktionen:**
    ```
+   # Willkommenssystem
    !welcome setup
    !welcome channel #willkommen
    !welcome rules #regeln
+   
+   # Moderationssystem
    !setmodlog #mod-logs
+   
+   # Auto-Moderation
    !automod enable
    !automod log #automod-logs
+   
+   # Ticket-System
+   !ticket setup
+   !ticket role @support-team
+   !ticket log #ticket-logs
+   !ticket panel #support
+   
+   # Temporäre Sprachkanäle
    !tempvoice setup "➕ Erstelle deinen Kanal"
    ```
-3. Regeln erstellen
-4. Auto-Mod anpassen
-5. Reaction Roles einrichten
-6. Events planen
+
+3. **Regelsystem einrichten:**
+   ```
+   !rules add 1 Respekt | Behandle alle Mitglieder mit Respekt.
+   !rules add 2 Sprache | Halte dich an eine angemessene Sprache.
+   !rules channel #regeln
+   ```
+
+4. **Auto-Moderation anpassen:**
+   ```
+   !automod spam an 5 3
+   !automod caps an 70
+   !automod emoji an 30
+   !automod addword [unerwünschtes_wort]
+   !automod addlink discord.gg
+   !automod whitelist role @Moderator
+   ```
+
+5. **Reaction Roles einrichten:**
+   ```
+   !reactionrole create 🎮 @Gamer Rolle für Spieler
+   !reactionrole create 🎵 @Musik Rolle für Musikliebhaber
+   ```
+
+6. **Events planen:**
+   ```
+   !event create "Willkommens-Event" 2023-12-31 18:00 Unsere erste gemeinsame Veranstaltung
+   ```
+
+7. **Ticket-System anpassen:**
+   ```
+   !ticket message Willkommen beim Support! Beschreibe dein Anliegen so detailliert wie möglich.
+   !ticket archive
+   ```
+
+8. **Wetter-System testen:**
+   ```
+   !wetter Berlin
+   ```
+
+9. **Temporäre Sprachkanäle konfigurieren:**
+   ```
+   !tempvoice limit 3
+   !tempvoice defaultprivacy locked
+   ```
+
+10. **System-Überprüfung:**
+    ```
+    !checkconfig
+    !automod status
+    !ticket stats
+    ```
 
 ## 📋 Voraussetzungen
 
@@ -431,7 +558,7 @@ Ein vielseitiger Discord Bot für Moderation, Community-Management und Server-Ad
 
 ## 🔄 Updates
 - Version: 1.1.0
-- Letzte Aktualisierung: [DATUM]
+- Letzte Aktualisierung: 14.12.2023
 
 ## 🤝 Support
 Bei Fragen oder Problemen:

@@ -25,6 +25,8 @@ async def load_extensions():
         await bot.load_extension("cogs.automod_commands")
         await bot.load_extension("cogs.temp_channels")
         await bot.load_extension("cogs.event_planner")
+        await bot.load_extension("cogs.ticket_system")
+        await bot.load_extension("cogs.twitch_integration")
         print("✅ Alle Extensions wurden geladen!")
     except Exception as e:
         print(f"❌ Fehler beim Laden der Extensions: {e}")

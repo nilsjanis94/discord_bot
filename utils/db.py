@@ -211,6 +211,68 @@ async def init_db():
         )
         ''')
 
+        # Ticket-System-Tabellen
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS ticket_config (
+                guild_id TEXT PRIMARY KEY,
+                category_id TEXT,
+                log_channel_id TEXT,
+                support_role_id TEXT,
+                ticket_counter INTEGER DEFAULT 0,
+                archive_category_id TEXT,
+                enabled BOOLEAN DEFAULT 0,
+                welcome_message TEXT DEFAULT 'Willkommen beim Support! Beschreibe dein Anliegen so detailliert wie möglich.'
+            )
+        ''')
+        
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS tickets (
+                ticket_id TEXT PRIMARY KEY,
+                guild_id TEXT,
+                channel_id TEXT,
+                user_id TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                closed_at TIMESTAMP,
+                closed_by TEXT,
+                status TEXT DEFAULT 'open',
+                title TEXT,
+                archived BOOLEAN DEFAULT 0
+            )
+        ''')
+
+        # Twitch-Integration Tabellen
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS twitch_config (
+                guild_id TEXT PRIMARY KEY,
+                client_id TEXT,
+                client_secret TEXT,
+                announcement_channel_id TEXT,
+                announcement_message TEXT DEFAULT '{streamer} ist jetzt live mit {game}! {url}',
+                ping_role_id TEXT,
+                enabled INTEGER DEFAULT 0
+            )
+        ''')
+        
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS twitch_streamers (
+                streamer_name TEXT,
+                guild_id TEXT,
+                last_stream_id TEXT,
+                last_online TIMESTAMP,
+                user_id TEXT,
+                PRIMARY KEY (streamer_name, guild_id)
+            )
+        ''')
+        
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS twitch_subscriptions (
+                user_id TEXT,
+                guild_id TEXT,
+                streamer_name TEXT,
+                PRIMARY KEY (user_id, guild_id, streamer_name)
+            )
+        ''')
+
         await db.commit()
         print("✅ Datenbank-Tabellen wurden initialisiert!")
 
